@@ -63,19 +63,7 @@ const DISCORD_ROLE_GROUPS = [
   },
 ];
 
-// ==========================================
-// 🧠 LIGHTWEIGHT USER INFO CACHE
-// ==========================================
-// Cache ini SENGAJA dipisah dari cache internal discord.js (GuildMemberManager).
-// Alasannya: GuildMemberManager di-limit 200 entry (biar hemat RAM utk Discloud
-// free plan 100MB), jadi kalau member aktif unik > 200, discord.js akan
-// meng-evict member lama dari cache -> newState.member / oldState.member jadi
-// undefined -> voice activity gagal ditulis (inilah penyebab "tidak realtime").
-//
-// Map ini cuma menyimpan 3 field kecil per user (bukan seluruh GuildMember
-// object), jadi walau menyimpan ribuan user, footprint memorinya tetap kecil
-// (~ratusan KB), dan TIDAK pernah di-evict otomatis.
-const userInfoCache = new Map(); // userId -> { username, avatarURL, bot }
+const userInfoCache = new Map();
 
 function cacheUserInfo(member) {
   if (!member?.user) return;
@@ -95,8 +83,6 @@ async function resolveUserInfo(userId, fallbackMember) {
     return userInfoCache.get(userId);
   }
 
-  // Fallback terakhir: fetch langsung ke Discord API (jarang kepakai,
-  // cuma kalau user belum sempat tercatat sama sekali di cache kita).
   const user = await client.users.fetch(userId).catch(() => null);
   if (!user) return null;
 
@@ -109,9 +95,6 @@ async function resolveUserInfo(userId, fallbackMember) {
   return info;
 }
 
-// ==========================================
-// 🛡️ SISTEM JARING PENGAMAN (ANTI-CRASH)
-// ==========================================
 process.on("unhandledRejection", (reason) => {
   console.error("⚠️ [ANTI-CRASH] Unhandled Rejection:", reason);
 });
@@ -125,9 +108,6 @@ client.rest.on("rateLimited", (info) => {
   console.warn(`⏳ [RATE LIMIT WARNING] Harus menunggu ${info.timeToReset}ms`);
 });
 
-// ==========================================
-// 🚀 EVENT: CLIENT READY & INITIAL SYNC
-// ==========================================
 client.once("clientReady", async () => {
   console.log(`✅ Bot online sebagai ${client.user.tag}`);
   await initialSync();
@@ -139,16 +119,9 @@ async function initialSync() {
     const guild = await client.guilds.fetch(GUILD_ID);
     if (!guild) return;
 
-    // Fetch member hanya dilakukan SATU KALI saat bot pertama kali menyala!
-    // cache:false sengaja dipakai supaya GuildMemberManager tetap kecil
-    // (hemat RAM). Karena itu kita TIDAK boleh lagi mengandalkan
-    // guild.members.cache di mana pun setelah ini — pakai `members`
-    // (collection hasil fetch) atau `userInfoCache` sebagai gantinya.
     console.log("📥 Mengunduh data seluruh anggota dari Discord...");
     const members = await guild.members.fetch({ cache: false });
 
-    // Bangun lightweight user info cache SEBELUM proses lain yang butuh
-    // data username/avatar (terutama syncVoiceActivity).
     members.forEach((m) => cacheUserInfo(m));
 
     await updateServerStats(guild);
@@ -280,11 +253,7 @@ async function syncBoosters(members) {
 }
 
 // === HELPER: VOICE ACTIVITY (INITIAL SYNC) ===
-// PENTING: fungsi ini TIDAK LAGI membaca channel.members / guild.members.cache
-// (karena kosong akibat cache:false + limit 200). Sumber data sekarang:
-//   1. guild.voiceStates.cache -> selalu terisi otomatis dari payload gateway
-//      saat guild ready, TIDAK tergantung GuildMemberManager.
-//   2. userInfoCache -> untuk username & avatar, tidak pernah ke-evict.
+
 async function syncVoiceActivity(guild) {
   try {
     const voiceMembers = [];
@@ -337,10 +306,6 @@ async function syncVoiceActivity(guild) {
 // === HELPER: UPDATE SERVER STATS (100% CACHE BASED) ===
 async function updateServerStats() {
   try {
-    // force:true WAJIB. Tanpa ini, karena guild sudah ter-cache sejak bot
-    // connect, discord.js akan langsung balikin objek dari cache dan TIDAK
-    // pernah benar-benar hit REST API dengan with_counts=true — akibatnya
-    // approximatePresenceCount selalu undefined (online_count selalu 0).
     const guild = await client.guilds.fetch({
       guild: GUILD_ID,
       withCounts: true,
@@ -365,7 +330,6 @@ async function updateServerStats() {
 client.on("guildMemberUpdate", async (oldMember, newMember) => {
   if (newMember.guild.id !== GUILD_ID || newMember.user.bot) return;
 
-  // Jaga userInfoCache tetap up-to-date (username/avatar berubah, dsb.)
   cacheUserInfo(newMember);
 
   // 1. Cek Perubahan Booster
@@ -408,7 +372,6 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
       });
 
       if (matchedRole) {
-        // Jika dia PUNYA salah satu role, cukup Update DIA SAJA (Upsert)
         await supabase.from(group.table).upsert(
           {
             discord_user_id: newMember.id,
@@ -424,12 +387,10 @@ client.on("guildMemberUpdate", async (oldMember, newMember) => {
           { onConflict: "discord_user_id" },
         );
       } else {
-        // Jika dia TIDAK PUNYA, cek apakah sebelumnya dia punya?
         const hadRoleBefore = group.roleIds.some((id) =>
           oldMember.roles.cache.has(id),
         );
         if (hadRoleBefore) {
-          // Jika role-nya baru saja dicabut, Hapus DIA SAJA dari database
           await supabase
             .from(group.table)
             .delete()
@@ -454,8 +415,6 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
     const userId = newState.id || oldState.id;
     const fallbackMember = newState.member || oldState.member;
 
-    // Resolve via userInfoCache dulu (tidak pernah ke-evict), baru fallback
-    // ke member dari event, baru fallback terakhir fetch API.
     const info = await resolveUserInfo(userId, fallbackMember);
     if (!info || info.bot) return;
 
@@ -509,9 +468,8 @@ async function initialSyncRecentMembers(members) {
   }
 }
 
-// ==========================================
 // ⏱️ CRON JOB: UPDATE STATS ONLINE
-// ==========================================
+
 setInterval(
   async () => {
     try {
@@ -524,15 +482,12 @@ setInterval(
   2 * 60 * 1000,
 );
 
-// ==========================================
-// 👋 EVENT: WARGA BARU JOIN (ULTRA REALTIME)
-// ==========================================
+// EVENT: WARGA BARU JOIN (ULTRA REALTIME)
+
 client.on("guildMemberAdd", async (member) => {
   if (member.guild.id !== GUILD_ID || member.user.bot) return;
   console.log(`👋 Warga baru: ${member.user.username}`);
 
-  // Catat ke userInfoCache supaya kalau dia langsung masuk VC, voiceStateUpdate
-  // bisa langsung resolve username/avatar tanpa fetch tambahan.
   cacheUserInfo(member);
 
   try {
@@ -553,9 +508,8 @@ client.on("guildMemberAdd", async (member) => {
   }
 });
 
-// ==========================================
 // 🚪 EVENT: WARGA KELUAR (LEAVE)
-// ==========================================
+
 client.on("guildMemberRemove", async (member) => {
   if (member.guild.id !== GUILD_ID || member.user.bot) return;
   console.log(`🚪 Warga keluar terdeteksi: ${member.user.username}`);
