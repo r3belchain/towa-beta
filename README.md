@@ -1,7 +1,3 @@
-
----
-
-```markdown
 # 🤖 TOWA Server Tracker Bot
 
 <p align="center">
@@ -73,7 +69,7 @@ npm install
 Buat file `.env` di direktori utama repositori dan masukkan variabel berikut:
 
 ```env
-DISCORD_BOT_TOKEN=token_bot_discord_kamu
+DISCORD_BOT_TOKEN=token_bot_discord
 GUILD_ID=id_server_discord_towa
 SUPABASE_URL=[https://xyzcompany.supabase.co](https://xyzcompany.supabase.co)
 SUPABASE_SECRET_KEY=service_role_atau_secret_key_supabase
