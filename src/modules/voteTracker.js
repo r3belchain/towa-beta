@@ -1,50 +1,45 @@
 import express from "express";
-import { supabase } from "../config/supabase.js";
 import {
-  VOTE_CHANNEL_ID,
-  TOPGG_WEBHOOK_AUTH,
   DISBOARD_BOT_ID,
   DISCADIA_BOT_ID,
+  TOPGG_WEBHOOK_AUTH,
+  VOTE_CHANNEL_ID,
 } from "../config/constants.js";
-import { resolveUserInfo } from "../utils/userCache.js";
+import { supabase } from "../config/supabase.js";
 
-async function addVoterPoint(client, userId, platform) {
+async function addVoterPoint(client, userId, source) {
   try {
-    const info = await resolveUserInfo(client, userId, null);
-    if (!info) return;
-
-    const { data: currentData, error } = await supabase
-      .from("voter_leaderboard")
-      .select("*")
-      .eq("discord_user_id", userId)
-      .maybeSingle();
-
-    let topggCount = currentData ? currentData.topgg_votes : 0;
-    let disboardCount = currentData ? currentData.disboard_bumps : 0;
-    let discadiaCount = currentData ? currentData.discadia_bumps : 0;
-
-    if (platform === "topgg") topggCount += 1;
-    if (platform === "disboard") disboardCount += 1;
-    if (platform === "discadia") discadiaCount += 1;
-
-    const totalPoints = topggCount + disboardCount + discadiaCount;
-
-    await supabase.from("voter_leaderboard").upsert({
-      discord_user_id: userId,
-      username: info.username,
-      avatar_url: info.avatarURL,
-      topgg_votes: topggCount,
-      disboard_bumps: disboardCount,
-      discadia_bumps: discadiaCount,
-      total_points: totalPoints,
-      updated_at: new Date().toISOString(),
+    // 1. Eksekusi Atomic Increment langsung di Supabase via RPC
+    const { error } = await supabase.rpc("increment_voter_point", {
+      target_user_id: userId,
+      vote_source: source,
     });
 
-    console.log(
-      `🌟 [+1 Poin ${platform}] untuk ${info.username}. Total: ${totalPoints}`,
-    );
+    if (error) {
+      console.error(
+        `❌ Error Supabase Atomic Increment (${source}):`,
+        error.message,
+      );
+      return;
+    }
+
+    console.log(`🌟 [+1 Poin ${source}] disinkronkan untuk User ID: ${userId}`);
+
+    const user = await client.users.fetch(userId).catch(() => null);
+    const username = user ? user.username : userId;
+
+    if (VOTE_CHANNEL_ID) {
+      const channel = await client.channels
+        .fetch(VOTE_CHANNEL_ID)
+        .catch(() => null);
+      if (channel) {
+        await channel.send(
+          `🔥 Keren! Poin leaderboard bertambah untuk <@${userId}> via **${source}**!`,
+        );
+      }
+    }
   } catch (err) {
-    console.error(`❌ Error tambah poin [${platform}]:`, err.message);
+    console.error(`❌ Error menangani poin (${source}):`, err.message);
   }
 }
 
@@ -58,7 +53,7 @@ export async function handleVoteMessage(client, message) {
   if (!isDisboard && !isDiscadia) return;
 
   try {
-    let platform = isDisboard ? "disboard" : "discadia";
+    let platform = isDisboard ? "Disboard" : "Discadia";
     ` `;
 
     // Validasi kalimat dari bot marketplace
@@ -104,7 +99,6 @@ export function startTopGGWebhook(client) {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-     
       res.status(200).json({ status: "ok" });
 
       const { user, type } = req.body || {};
