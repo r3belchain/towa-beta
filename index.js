@@ -1,33 +1,39 @@
-import { Client, GatewayIntentBits, Options, Partials, REST, Routes } from "discord.js";
+import {
+  Client,
+  GatewayIntentBits,
+  Options,
+  Partials,
+  REST,
+  Routes,
+} from "discord.js";
 import "dotenv/config";
-import { GUILD_ID, DISCORD_ROLE_GROUPS } from "./src/config/constants.js";
-import { cacheUserInfo } from "./src/utils/userCache.js";
-import {
-  updateServerStats,
-  startStatsCron,
-} from "./src/modules/statsTracker.js";
-import {
-  syncVoiceActivity,
-  handleVoiceStateUpdate,
-} from "./src/modules/voiceTracker.js";
-import {
-  syncRoleGroup,
-  syncBoosters,
-  initialSyncRecentMembers,
-  handleGuildMemberUpdate,
-  handleGuildMemberAdd,
-  handleGuildMemberRemove,
-} from "./src/modules/memberTracker.js";
-import {
-  handleVoteMessage,
-  startTopGGWebhook,
-} from "./src/modules/voteTracker.js";
+import { DISCORD_ROLE_GROUPS, GUILD_ID } from "./src/config/constants.js";
 import {
   getLeaderboardEmbed,
   leaderboardCommandData,
   startWeeklyLeaderboardCron,
 } from "./src/modules/leaderboard.js";
-
+import {
+  handleGuildMemberAdd,
+  handleGuildMemberRemove,
+  handleGuildMemberUpdate,
+  initialSyncRecentMembers,
+  syncBoosters,
+  syncRoleGroup,
+} from "./src/modules/memberTracker.js";
+import {
+  startStatsCron,
+  updateServerStats,
+} from "./src/modules/statsTracker.js";
+import {
+  handleVoiceStateUpdate,
+  syncVoiceActivity,
+} from "./src/modules/voiceTracker.js";
+import {
+  handleVoteMessage,
+  startTopGGWebhook,
+} from "./src/modules/voteTracker.js";
+import { cacheUserInfo } from "./src/utils/userCache.js";
 
 // SETUP DISCORD CLIENT
 
@@ -36,8 +42,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildVoiceStates,
-    GatewayIntentBits.GuildMessages, 
-    GatewayIntentBits.MessageContent, 
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
   ],
   partials: [Partials.GuildMember],
   makeCache: Options.cacheWithLimits({
@@ -63,7 +69,6 @@ const client = new Client({
   },
 });
 
-
 // 2. ANTI-CRASH & WARNINGS
 
 process.on("unhandledRejection", (reason) =>
@@ -76,7 +81,6 @@ client.on("error", (err) => console.error("⚠️ [DISCORD ERROR]:", err.message
 client.rest.on("rateLimited", (info) =>
   console.warn(`⏳ [RATE LIMIT] Tunggu ${info.timeToReset}ms`),
 );
-
 
 // INITIAL SYNC LOGIC
 
@@ -104,14 +108,12 @@ async function initialSync() {
   }
 }
 
-
 client.once("clientReady", async () => {
   console.log(`✅ Bot online sebagai ${client.user.tag}`);
   await initialSync();
   startStatsCron(client);
   startTopGGWebhook(client);
 
- 
   try {
     const rest = new REST({ version: "10" }).setToken(
       process.env.DISCORD_BOT_TOKEN,

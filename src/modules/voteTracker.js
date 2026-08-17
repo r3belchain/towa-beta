@@ -9,25 +9,58 @@ import { supabase } from "../config/supabase.js";
 
 async function addVoterPoint(client, userId, source) {
   try {
-    // 1. Eksekusi Atomic Increment langsung di Supabase via RPC
-    const { error } = await supabase.rpc("increment_voter_point", {
-      target_user_id: userId,
-      vote_source: source,
-    });
+    // Cek apakah user sudah terdaftar di Supabase
+    const { data: userExist, error: fetchError } = await supabase
+      .from("voter_leaderboard")
+      .select("total_points, disboard_bumps, discadia_bumps, topgg_votes")
+      .eq("discord_user_id", userId)
+      .maybeSingle();
 
-    if (error) {
+    if (fetchError) {
       console.error(
-        `❌ Error Supabase Atomic Increment (${source}):`,
-        error.message,
+        `❌ Error cek DB untuk User ${userId}:`,
+        fetchError.message,
       );
-      return;
+      return false;
+    }
+
+    // Hitung penambahan poin secara dinamis
+    const currentPoints = userExist?.total_points || 0;
+    const newPoints = currentPoints + 1;
+
+    let updateData = {
+      discord_user_id: userId,
+      total_points: newPoints,
+      updated_at: new Date(),
+    };
+
+    if (source.toLowerCase() === "disboard") {
+      updateData.disboard_bumps = (userExist?.disboard_bumps || 0) + 1;
+    } else if (source.toLowerCase() === "discadia") {
+      updateData.discadia_bumps = (userExist?.discadia_bumps || 0) + 1;
+    } else if (source.toLowerCase() === "topgg") {
+      updateData.topgg_votes = (userExist?.topgg_votes || 0) + 1;
+    }
+
+    // ambil username terbaru dari Discord
+    const userDiscord = await client.users.fetch(userId).catch(() => null);
+    if (userDiscord) updateData.username = userDiscord.username;
+
+    const { error: upsertError } = await supabase
+      .from("voter_leaderboard")
+      .upsert(updateData, { onConflict: "discord_user_id" });
+
+    if (upsertError) {
+      console.error(
+        `❌ Error Upsert Supabase (${source}):`,
+        upsertError.message,
+      );
+      return false;
     }
 
     console.log(`🌟 [+1 Poin ${source}] disinkronkan untuk User ID: ${userId}`);
 
-    const user = await client.users.fetch(userId).catch(() => null);
-    const username = user ? user.username : userId;
-
+    //Kirim notifikasi JIKA data berhasil masuk ke DB
     if (VOTE_CHANNEL_ID) {
       const channel = await client.channels
         .fetch(VOTE_CHANNEL_ID)
@@ -38,8 +71,11 @@ async function addVoterPoint(client, userId, source) {
         );
       }
     }
+
+    return true;
   } catch (err) {
     console.error(`❌ Error menangani poin (${source}):`, err.message);
+    return false;
   }
 }
 
@@ -54,7 +90,6 @@ export async function handleVoteMessage(client, message) {
 
   try {
     let platform = isDisboard ? "Disboard" : "Discadia";
-    ` `;
 
     // Validasi kalimat dari bot marketplace
     const isSuccess =
@@ -73,9 +108,6 @@ export async function handleVoteMessage(client, message) {
 
       if (userId) {
         await addVoterPoint(client, userId, platform);
-        message.channel.send(
-          `🔥 Keren! Poin leaderboard bertambah untuk <@${userId}> via ${platform}!`,
-        );
       }
     }
   } catch (err) {
@@ -85,7 +117,6 @@ export async function handleVoteMessage(client, message) {
 
 export function startTopGGWebhook(client) {
   const app = express();
-
   app.use(express.json());
 
   app.post("/webhook/topgg", async (req, res) => {
@@ -106,7 +137,7 @@ export function startTopGGWebhook(client) {
         console.log(
           `📥 Menerima webhook Top.gg (${type || "vote"}) dari User ID: ${user}`,
         );
-        await addVoterPoint(client, user, "topgg");
+        await addVoterPoint(client, user, "Top.gg");
       }
     } catch (err) {
       console.error("❌ Error pada Webhook Express Top.gg:", err.message);
