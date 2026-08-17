@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Options, Partials } from "discord.js";
+import { Client, GatewayIntentBits, Options, Partials, REST, Routes } from "discord.js";
 import "dotenv/config";
 import { GUILD_ID, DISCORD_ROLE_GROUPS } from "./src/config/constants.js";
 import { cacheUserInfo } from "./src/utils/userCache.js";
@@ -22,6 +22,11 @@ import {
   handleVoteMessage,
   startTopGGWebhook,
 } from "./src/modules/voteTracker.js";
+import {
+  getLeaderboardEmbed,
+  leaderboardCommandData,
+  startWeeklyLeaderboardCron,
+} from "./src/modules/leaderboard.js";
 
 
 // SETUP DISCORD CLIENT
@@ -100,12 +105,29 @@ async function initialSync() {
 }
 
 
-// 4. EVENT ROUTING
 client.once("clientReady", async () => {
   console.log(`✅ Bot online sebagai ${client.user.tag}`);
   await initialSync();
   startStatsCron(client);
-  startTopGGWebhook(client); 
+  startTopGGWebhook(client);
+
+ 
+  try {
+    const rest = new REST({ version: "10" }).setToken(
+      process.env.DISCORD_BOT_TOKEN,
+    );
+    await rest.put(Routes.applicationGuildCommands(client.user.id, GUILD_ID), {
+      body: [leaderboardCommandData.toJSON()],
+    });
+    console.log(
+      "✅ Guild Command /leaderboard berhasil terdaftar di Server TOWA!",
+    );
+  } catch (err) {
+    console.error("❌ Gagal mendaftarkan Slash Command:", err.message);
+  }
+
+  // Jalankan Cronjob Leaderboard (Sabtu Jam 21:00 WIB)
+  startWeeklyLeaderboardCron(client);
 });
 
 client.on("guildMemberUpdate", (oldMem, newMem) =>
@@ -118,7 +140,18 @@ client.on("guildMemberRemove", (member) =>
 client.on("voiceStateUpdate", (oldState, newState) =>
   handleVoiceStateUpdate(client, oldState, newState),
 );
-client.on("messageCreate", (message) => handleVoteMessage(client, message)); 
+client.on("messageCreate", (message) => handleVoteMessage(client, message));
+
+// Listener Interaksi Slash Command
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === "leaderboard") {
+    await interaction.deferReply();
+    const embed = await getLeaderboardEmbed();
+    await interaction.editReply({ embeds: [embed] });
+  }
+});
 
 // LOGIN
 
