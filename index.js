@@ -108,7 +108,7 @@ async function initialSync() {
   }
 }
 
-// CLIENT READY EVENT 
+// CLIENT READY EVENT
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Bot online sebagai ${client.user.tag}`);
 
@@ -130,7 +130,7 @@ client.once(Events.ClientReady, async () => {
     console.error("❌ Gagal mendaftarkan Slash Command:", err.message);
   }
 
-  // Cronjob Leaderboard 
+  // Cronjob Leaderboard
   startWeeklyLeaderboardCron(client);
 });
 

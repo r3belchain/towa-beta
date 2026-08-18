@@ -20,6 +20,7 @@ export const DISCORD_ROLE_GROUPS = [
       "1520544354043826197", // ID Creative Lab
       "1523980859441414296", // ID Bandar Event
       "1515476142591840456", // ID Tukang ramein
+      "1520545354259370026", // ID Media Squad
     ],
   },
   {
