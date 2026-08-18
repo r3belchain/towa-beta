@@ -4,7 +4,7 @@ export const GUILD_ID = process.env.GUILD_ID;
 export const VOTE_CHANNEL_ID = process.env.VOTE_CHANNEL_ID;
 export const TOPGG_WEBHOOK_AUTH = process.env.TOPGG_WEBHOOK_AUTH;
 export const DISBOARD_BOT_ID =
-process.env.DISBOARD_BOT_ID || "302050872383242240";
+  process.env.DISBOARD_BOT_ID || "302050872383242240";
 export const DISCADIA_BOT_ID = process.env.DISCADIA_BOT_ID;
 
 export const DISCORD_ROLE_GROUPS = [

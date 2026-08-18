@@ -1,4 +1,5 @@
 import express from "express";
+import crypto from "crypto"; 
 import {
   DISBOARD_BOT_ID,
   DISCADIA_BOT_ID,
@@ -6,6 +7,31 @@ import {
   VOTE_CHANNEL_ID,
 } from "../config/constants.js";
 import { supabase } from "../config/supabase.js";
+
+// Fungsi helper untuk verifikasi signature Top.gg
+function verifyWebhook(rawBody, signature, secret) {
+  if (!signature || !secret || !rawBody) return false;
+  try {
+    const [tPart, v1Part] = signature.split(",");
+    if (!tPart || !v1Part) return false;
+
+    const timestamp = tPart.split("=")[1];
+    const receivedSig = v1Part.split("=")[1];
+
+    const expected = crypto
+      .createHmac("sha256", secret)
+      .update(`${timestamp}.${rawBody}`)
+      .digest("hex");
+
+    const bufExpected = Buffer.from(expected, "utf8");
+    const bufReceived = Buffer.from(receivedSig, "utf8");
+
+    if (bufExpected.length !== bufReceived.length) return false;
+    return crypto.timingSafeEqual(bufExpected, bufReceived);
+  } catch (err) {
+    return false;
+  }
+}
 
 async function addVoterPoint(client, userId, source) {
   try {
@@ -60,7 +86,7 @@ async function addVoterPoint(client, userId, source) {
 
     console.log(`🌟 [+1 Poin ${source}] disinkronkan untuk User ID: ${userId}`);
 
-    //Kirim notifikasi JIKA data berhasil masuk ke DB
+    // Kirim notifikasi JIKA data berhasil masuk ke DB
     if (VOTE_CHANNEL_ID) {
       const channel = await client.channels
         .fetch(VOTE_CHANNEL_ID)
@@ -117,16 +143,27 @@ export async function handleVoteMessage(client, message) {
 
 export function startTopGGWebhook(client) {
   const app = express();
-  app.use(express.json());
+
+  app.use(
+    express.json({
+      verify: (req, res, buf) => {
+        req.rawBody = buf.toString("utf8");
+      },
+    }),
+  );
 
   app.post("/webhook/topgg", async (req, res) => {
     try {
-      // Verifikasi Password Authorization
-      const authHeader = req.headers.authorization;
-      if (authHeader !== TOPGG_WEBHOOK_AUTH) {
-        console.warn(
-          "⚠️ Webhook Top.gg ditolak: Authorization header tidak valid.",
-        );
+      // Menangkap Header Signature dari Top.gg
+      const signature = req.headers["x-topgg-signature"];
+      const secret = TOPGG_WEBHOOK_AUTH;
+      const rawBody = req.rawBody;
+
+      // Jalankan fungsi verifikasi
+      const isValid = verifyWebhook(rawBody, signature, secret);
+
+      if (!isValid) {
+        console.warn("⚠️ Webhook Top.gg ditolak: Verifikasi signature gagal.");
         return res.status(401).json({ error: "Unauthorized" });
       }
 
