@@ -1,5 +1,6 @@
 import {
   Client,
+  Events,
   GatewayIntentBits,
   Options,
   Partials,
@@ -36,7 +37,6 @@ import {
 import { cacheUserInfo } from "./src/utils/userCache.js";
 
 // SETUP DISCORD CLIENT
-
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -69,21 +69,21 @@ const client = new Client({
   },
 });
 
-// 2. ANTI-CRASH & WARNINGS
-
+// ANTI-CRASH & WARNINGS
 process.on("unhandledRejection", (reason) =>
   console.error("⚠️ [ANTI-CRASH] Unhandled:", reason),
 );
 process.on("uncaughtException", (err) =>
   console.error("⚠️ [ANTI-CRASH] Uncaught:", err),
 );
-client.on("error", (err) => console.error("⚠️ [DISCORD ERROR]:", err.message));
+client.on(Events.Error, (err) =>
+  console.error("⚠️ [DISCORD ERROR]:", err.message),
+);
 client.rest.on("rateLimited", (info) =>
   console.warn(`⏳ [RATE LIMIT] Tunggu ${info.timeToReset}ms`),
 );
 
 // INITIAL SYNC LOGIC
-
 async function initialSync() {
   console.log("🔄 Memulai Initial Sync data Supabase...");
   try {
@@ -108,8 +108,10 @@ async function initialSync() {
   }
 }
 
-client.once("clientReady", async () => {
+// CLIENT READY EVENT 
+client.once(Events.ClientReady, async () => {
   console.log(`✅ Bot online sebagai ${client.user.tag}`);
+
   await initialSync();
   startStatsCron(client);
   startTopGGWebhook(client);
@@ -128,24 +130,29 @@ client.once("clientReady", async () => {
     console.error("❌ Gagal mendaftarkan Slash Command:", err.message);
   }
 
-  // Jalankan Cronjob Leaderboard (Sabtu Jam 21:00 WIB)
+  // Cronjob Leaderboard 
   startWeeklyLeaderboardCron(client);
 });
 
-client.on("guildMemberUpdate", (oldMem, newMem) =>
+// EVENT LISTENERS
+client.on(Events.GuildMemberUpdate, (oldMem, newMem) =>
   handleGuildMemberUpdate(oldMem, newMem),
 );
-client.on("guildMemberAdd", (member) => handleGuildMemberAdd(member, client));
-client.on("guildMemberRemove", (member) =>
+client.on(Events.GuildMemberAdd, (member) =>
+  handleGuildMemberAdd(member, client),
+);
+client.on(Events.GuildMemberRemove, (member) =>
   handleGuildMemberRemove(member, client),
 );
-client.on("voiceStateUpdate", (oldState, newState) =>
+client.on(Events.VoiceStateUpdate, (oldState, newState) =>
   handleVoiceStateUpdate(client, oldState, newState),
 );
-client.on("messageCreate", (message) => handleVoteMessage(client, message));
+client.on(Events.MessageCreate, (message) =>
+  handleVoteMessage(client, message),
+);
 
 // Listener Interaksi Slash Command
-client.on("interactionCreate", async (interaction) => {
+client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === "leaderboard") {
@@ -156,5 +163,4 @@ client.on("interactionCreate", async (interaction) => {
 });
 
 // LOGIN
-
 client.login(process.env.DISCORD_BOT_TOKEN);

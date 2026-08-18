@@ -1,5 +1,5 @@
+import crypto from "crypto";
 import express from "express";
-import crypto from "crypto"; 
 import {
   DISBOARD_BOT_ID,
   DISCADIA_BOT_ID,
@@ -8,7 +8,7 @@ import {
 } from "../config/constants.js";
 import { supabase } from "../config/supabase.js";
 
-// Fungsi helper untuk verifikasi signature Top.gg
+// Fungsi helper verifikasi signature Top.gg
 function verifyWebhook(rawBody, signature, secret) {
   if (!signature || !secret || !rawBody) return false;
   try {
@@ -154,30 +154,66 @@ export function startTopGGWebhook(client) {
 
   app.post("/webhook/topgg", async (req, res) => {
     try {
-      // Menangkap Header Signature dari Top.gg
       const signature = req.headers["x-topgg-signature"];
       const secret = TOPGG_WEBHOOK_AUTH;
       const rawBody = req.rawBody;
 
-      // Jalankan fungsi verifikasi
-      const isValid = verifyWebhook(rawBody, signature, secret);
-
-      if (!isValid) {
-        console.warn("⚠️ Webhook Top.gg ditolak: Verifikasi signature gagal.");
+      // HMAC SHA-256
+      if (!verifyWebhook(rawBody, signature, secret)) {
+        console.warn("⚠️ [Top.gg] Ditolak: Invalid HMAC SHA-256 Signature.");
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      res.status(200).json({ status: "ok" });
+      const payload = req.body || {};
+      const eventType = payload.type;
+      const data = payload.data || {};
 
-      const { user, type } = req.body || {};
-      if (user) {
+      // Test vs Real Vote
+      if (eventType === "webhook.test") {
         console.log(
-          `📥 Menerima webhook Top.gg (${type || "vote"}) dari User ID: ${user}`,
+          `🛠️ [Top.gg] Test Webhook sukses diterima dari tester: ${data.user?.name || "System"}`,
         );
-        await addVoterPoint(client, user, "Top.gg");
+        return res.status(200).json({ status: "test_ok" });
       }
+
+      if (eventType === "vote.create") {
+        const userId = data.user?.platform_id;
+
+        if (!userId) {
+          console.warn(
+            "⚠️ [Top.gg] Payload vote.create tidak memiliki platform_id (Discord ID) yang valid.",
+          );
+          return res.status(400).json({ error: "Missing User ID" });
+        }
+
+        // 1 untuk hari biasa, 2 saat Weekend Double Vote
+        const weight = data.weight || 1;
+        console.log(
+          `📥 [Top.gg] Memproses upvote (Multiplier: x${weight}) untuk Discord User ID: ${userId}`,
+        );
+
+        // DATABASE EXECUTION
+        let isSuccess = true;
+        // double vote weekend
+        for (let i = 0; i < weight; i++) {
+          const result = await addVoterPoint(client, userId, "Top.gg");
+          if (!result) isSuccess = false;
+        }
+
+        // pola Ack-Wait 
+        if (isSuccess) {
+          return res.status(200).json({ status: "ok" });
+        } else {
+          return res.status(500).json({ error: "Database Sync Failed" });
+        }
+      }
+
+    
+      return res.status(200).json({ status: "ignored" });
     } catch (err) {
-      console.error("❌ Error pada Webhook Express Top.gg:", err.message);
+      console.error("❌ [Top.gg] Error Internal Server Webhook:", err.stack);
+      if (!res.headersSent)
+        res.status(500).json({ error: "Internal Server Error" });
     }
   });
 
