@@ -60,14 +60,16 @@ async function addVoterPoint(client, userId, source) {
       updated_at: new Date(),
     };
 
-    if (source.toLowerCase() === "disboard") {
+    const cleanSource = source.toLowerCase().replace(/\./g, "");
+
+    if (cleanSource === "disboard") {
       updateData.disboard_bumps = (userExist?.disboard_bumps || 0) + 1;
-    } else if (source.toLowerCase() === "discadia") {
+    } else if (cleanSource === "discadia") {
       updateData.discadia_bumps = (userExist?.discadia_bumps || 0) + 1;
-    } else if (source.toLowerCase() === "topgg") {
+    } else if (cleanSource === "topgg") {
       updateData.topgg_votes = (userExist?.topgg_votes || 0) + 1;
     }
-
+    
     // ambil username terbaru dari Discord
     const userDiscord = await client.users.fetch(userId).catch(() => null);
     if (userDiscord) updateData.username = userDiscord.username;
