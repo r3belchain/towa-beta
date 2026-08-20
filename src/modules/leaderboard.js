@@ -46,6 +46,7 @@ export async function getLeaderboardEmbed() {
     .setTitle("🏆 Top 5 Leaderboard Vote TOWA Server")
     .setColor("#FFD700")
     .setDescription(leaderboardList + instructionText)
+    .setImage("https://cdn.discordapp.com/attachments/1515794110554832896/1540135811192983562/towa-gif.gif?ex=6a88dabf&is=6a87893f&hm=f126325c068a2d75bfbdaaf79dc63d1f209183ed44142ffbd7da69d5a8394551&")
     .setFooter({
       text: "Vote terus di Disboard, Discadia, dan Top.gg! Dukungan warga terhadap TOWA sangat berarti!",
     })
