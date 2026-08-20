@@ -1,22 +1,21 @@
 
--- Tabel 1: members (log join/leave member)
+-- Tabel 1: members 
 
 CREATE TABLE IF NOT EXISTS members (
   id BIGSERIAL PRIMARY KEY,
   discord_user_id TEXT NOT NULL,
   username TEXT NOT NULL,
   avatar_url TEXT,
-  event_type TEXT NOT NULL, -- 'join' atau 'leave'
+  event_type TEXT NOT NULL, 
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index untuk query cepat
 CREATE INDEX IF NOT EXISTS idx_members_discord_user_id ON members(discord_user_id);
 CREATE INDEX IF NOT EXISTS idx_members_event_type ON members(event_type);
 CREATE INDEX IF NOT EXISTS idx_members_created_at ON members(created_at DESC);
 
 
--- Tabel 2: boosters (tracking server booster)
+-- Tabel 2: boosters 
 
 CREATE TABLE IF NOT EXISTS boosters (
   id BIGSERIAL PRIMARY KEY,
@@ -27,11 +26,11 @@ CREATE TABLE IF NOT EXISTS boosters (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index
+
 CREATE INDEX IF NOT EXISTS idx_boosters_discord_user_id ON boosters(discord_user_id);
 
 
--- Tabel 3: voice_activity (tracking VC real-time)
+-- Tabel 3: voice_activity
 
 CREATE TABLE IF NOT EXISTS voice_activity (
   id BIGSERIAL PRIMARY KEY,
@@ -44,12 +43,12 @@ CREATE TABLE IF NOT EXISTS voice_activity (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Index
+
 CREATE INDEX IF NOT EXISTS idx_voice_activity_discord_user_id ON voice_activity(discord_user_id);
 CREATE INDEX IF NOT EXISTS idx_voice_activity_channel_id ON voice_activity(channel_id);
 
 
--- Tabel 4: server_stats (total member & online)
+-- Tabel 4: server_stats
 
 CREATE TABLE IF NOT EXISTS server_stats (
   id INTEGER PRIMARY KEY DEFAULT 1,
@@ -59,7 +58,6 @@ CREATE TABLE IF NOT EXISTS server_stats (
   CONSTRAINT single_row_only CHECK (id = 1)
 );
 
--- Insert row awal (hanya 1 row)
 INSERT INTO server_stats (id, total_members, online_count)
 VALUES (1, 0, 0)
 ON CONFLICT (id) DO NOTHING;
