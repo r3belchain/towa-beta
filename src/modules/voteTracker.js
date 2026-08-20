@@ -69,7 +69,7 @@ async function addVoterPoint(client, userId, source) {
     } else if (cleanSource === "topgg") {
       updateData.topgg_votes = (userExist?.topgg_votes || 0) + 1;
     }
-    
+
     // ambil username terbaru dari Discord
     const userDiscord = await client.users.fetch(userId).catch(() => null);
     if (userDiscord) updateData.username = userDiscord.username;
@@ -202,7 +202,7 @@ export function startTopGGWebhook(client) {
           if (!result) isSuccess = false;
         }
 
-        // pola Ack-Wait 
+        // pola Ack-Wait
         if (isSuccess) {
           return res.status(200).json({ status: "ok" });
         } else {
@@ -210,7 +210,6 @@ export function startTopGGWebhook(client) {
         }
       }
 
-    
       return res.status(200).json({ status: "ignored" });
     } catch (err) {
       console.error("❌ [Top.gg] Error Internal Server Webhook:", err.stack);
