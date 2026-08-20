@@ -36,11 +36,19 @@ export async function getLeaderboardEmbed() {
     })
     .join("\n\n");
 
+    const instructionText =
+      `\n\n──────────────────────────────\n` +
+      `📌 **Cara Dukung & Vote TOWA Server:**\n` +
+      `• **Disboard & Discadia:** Ketik \`/bump\` langsung di channel vote.\n` +
+      `• **Top.gg:** [Klik di sini untuk Vote via Website Top.gg](https://top.gg/discord/servers/853760867561975808/vote)`;
+
   return new EmbedBuilder()
     .setTitle("🏆 Top 5 Leaderboard Vote TOWA Server")
     .setColor("#FFD700")
-    .setDescription(leaderboardList)
-    .setFooter({ text: "Vote terus di Disboard, Discadia, dan Top.gg!" })
+    .setDescription(leaderboardList + instructionText)
+    .setFooter({
+      text: "Vote terus di Disboard, Discadia, dan Top.gg! Dukungan warga terhadap TOWA sangat berarti!",
+    })
     .setTimestamp();
 }
 
