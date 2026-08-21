@@ -12,7 +12,7 @@ import { DISCORD_ROLE_GROUPS, GUILD_ID } from "./src/config/constants.js";
 import {
   getLeaderboardEmbed,
   leaderboardCommandData,
-  startWeeklyLeaderboardCron,
+  startMonthlyResetCron,
 } from "./src/modules/leaderboard.js";
 import {
   handleGuildMemberAdd,
@@ -130,8 +130,7 @@ client.once(Events.ClientReady, async () => {
     console.error("❌ Gagal mendaftarkan Slash Command:", err.message);
   }
 
-  // Cronjob Leaderboard
-  startWeeklyLeaderboardCron(client);
+  startMonthlyResetCron(client);
 });
 
 // EVENT LISTENERS
