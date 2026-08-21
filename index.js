@@ -34,6 +34,7 @@ import {
   handleVoteMessage,
   startTopGGWebhook,
 } from "./src/modules/voteTracker.js";
+import { handleWelcomeMember } from "./src/modules/welcomeTracker.js";
 import { cacheUserInfo } from "./src/utils/userCache.js";
 
 // SETUP DISCORD CLIENT
@@ -137,9 +138,10 @@ client.once(Events.ClientReady, async () => {
 client.on(Events.GuildMemberUpdate, (oldMem, newMem) =>
   handleGuildMemberUpdate(oldMem, newMem),
 );
-client.on(Events.GuildMemberAdd, (member) =>
-  handleGuildMemberAdd(member, client),
-);
+client.on(Events.GuildMemberAdd, async (member) => {
+  handleGuildMemberAdd(member, client);
+  handleWelcomeMember(member, client);
+});
 client.on(Events.GuildMemberRemove, (member) =>
   handleGuildMemberRemove(member, client),
 );
