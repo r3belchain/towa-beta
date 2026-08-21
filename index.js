@@ -15,6 +15,12 @@ import {
   startMonthlyResetCron,
 } from "./src/modules/leaderboard.js";
 import {
+  parkirCommandData,
+  unparkirCommandData,
+  handleParkirCommand,
+  handleUnparkirCommand,
+} from "./src/modules/parkingVoice.js";
+import {
   handleGuildMemberAdd,
   handleGuildMemberRemove,
   handleGuildMemberUpdate,
@@ -122,10 +128,14 @@ client.once(Events.ClientReady, async () => {
       process.env.DISCORD_BOT_TOKEN,
     );
     await rest.put(Routes.applicationGuildCommands(client.user.id, GUILD_ID), {
-      body: [leaderboardCommandData.toJSON()],
+      body: [
+        leaderboardCommandData.toJSON(),
+        parkirCommandData.toJSON(),
+        unparkirCommandData.toJSON(),
+      ],
     });
     console.log(
-      "✅ Guild Command /leaderboard berhasil terdaftar di Server TOWA!",
+      "✅ Guild Commands (/leaderboard, /parkir, /unparkir) berhasil terdaftar di Server TOWA!",
     );
   } catch (err) {
     console.error("❌ Gagal mendaftarkan Slash Command:", err.message);
@@ -160,6 +170,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await interaction.deferReply();
     const embed = await getLeaderboardEmbed();
     await interaction.editReply({ embeds: [embed] });
+  } else if (interaction.commandName === "parkir") {
+    await handleParkirCommand(interaction);
+  } else if (interaction.commandName === "unparkir") {
+    await handleUnparkirCommand(interaction);
   }
 });
 
