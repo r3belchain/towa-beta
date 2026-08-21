@@ -9,11 +9,7 @@ import {
   VoiceConnectionStatus,
   entersState,
 } from "@discordjs/voice";
-import { DISCORD_ROLE_GROUPS } from "../config/constants.js";
-
-// Ambil default role staff yang diizinkan menggunakan command parkir
-const staffGroup = DISCORD_ROLE_GROUPS.find((g) => g.table === "staff_members");
-export const ALLOWED_PARKIR_ROLES = staffGroup ? staffGroup.roleIds : [];
+import { ALLOWED_ROLE_IDS } from "../config/constants.js";
 
 // 1. DEFINISI SLASH COMMAND
 export const parkirCommandData = new SlashCommandBuilder()
@@ -30,23 +26,22 @@ export function hasParkirPermission(member) {
   // Administrator selalu diizinkan
   if (member.permissions?.has(PermissionFlagsBits.Administrator)) return true;
 
-  // Cek apakah member punya salah satu role yang diizinkan
-  return ALLOWED_PARKIR_ROLES.some((roleId) => member.roles.cache.has(roleId));
+ 
+  return ALLOWED_ROLE_IDS.some((roleId) =>
+    member.roles.cache.has(roleId),
+  );
 }
 
 // 2. HANDLER COMMAND /parkir
 export async function handleParkirCommand(interaction) {
-  // A. Cek Hak Akses Role
   if (!hasParkirPermission(interaction.member)) {
     return interaction.reply({
-      content: "❌ Kamu tidak memiliki izin / role untuk menggunakan command parkir ini!",
+      content:
+        "❌ Kamu tidak memiliki izin / role untuk menggunakan command parkir ini!",
       ephemeral: true,
     });
   }
 
-  // B. Tentukan Target Voice Channel
-  // 1. Jika diketik langsung di open chat Voice Channel
-  // 2. Atau jika user sedang join di salah satu Voice Channel
   let targetChannel = null;
 
   if (interaction.channel?.isVoiceBased()) {
@@ -64,7 +59,6 @@ export async function handleParkirCommand(interaction) {
   }
 
   try {
-    // C. Masuk ke Voice Channel (Mode 24/7 & selfDeaf)
     const connection = joinVoiceChannel({
       channelId: targetChannel.id,
       guildId: targetChannel.guild.id,
@@ -73,7 +67,6 @@ export async function handleParkirCommand(interaction) {
       selfMute: true,
     });
 
-    // Setup handler error & reconnect agar tetap stay 24/7
     connection.on(VoiceConnectionStatus.Disconnected, async () => {
       try {
         await Promise.race([
@@ -109,10 +102,10 @@ export async function handleParkirCommand(interaction) {
 
 // 3. HANDLER COMMAND /unparkir
 export async function handleUnparkirCommand(interaction) {
-  // A. Cek Hak Akses Role
   if (!hasParkirPermission(interaction.member)) {
     return interaction.reply({
-      content: "❌ Kamu tidak memiliki izin / role untuk menggunakan command ini!",
+      content:
+        "❌ Kamu tidak memiliki izin / role untuk menggunakan command ini!",
       ephemeral: true,
     });
   }
@@ -132,7 +125,9 @@ export async function handleUnparkirCommand(interaction) {
     const embed = new EmbedBuilder()
       .setTitle("👋 Bot Keluar dari Parkiran")
       .setColor("#E74C3C")
-      .setDescription(`Bot telah keluar dari Voice Channel atas permintaan <@${interaction.user.id}>.`)
+      .setDescription(
+        `Bot telah keluar dari Voice Channel atas permintaan <@${interaction.user.id}>.`,
+      )
       .setTimestamp();
 
     await interaction.reply({ embeds: [embed] });

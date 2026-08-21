@@ -22,7 +22,7 @@ export const DISCORD_ROLE_GROUPS = [
       "1523980859441414296", // ID Bandar Event
       "1515476142591840456", // ID Tukang ramein
       "1520545354259370026", // ID Media Squad
-      "1529119440640278566", // ID Tech Architec towa tumbal
+      
     ],
   },
   {
@@ -32,6 +32,11 @@ export const DISCORD_ROLE_GROUPS = [
       "1526878454979760128", // ID Warga Sultan
     ],
   },
+];
+
+// KHUSUS ROLE SERVER TOWA TUMBAL (Testing)
+export const ALLOWED_ROLE_IDS = [
+  "1529119440640278566", // ID Tech Architec towa tumbal
 ];
 
 export const PEJABAT_ROLE_ID = "1515470585574981813"; // ID Pejabat
