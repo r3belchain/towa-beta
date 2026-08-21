@@ -15,12 +15,6 @@ import {
   startMonthlyResetCron,
 } from "./src/modules/leaderboard.js";
 import {
-  parkirCommandData,
-  unparkirCommandData,
-  handleParkirCommand,
-  handleUnparkirCommand,
-} from "./src/modules/parkingVoice.js";
-import {
   handleGuildMemberAdd,
   handleGuildMemberRemove,
   handleGuildMemberUpdate,
@@ -29,9 +23,19 @@ import {
   syncRoleGroup,
 } from "./src/modules/memberTracker.js";
 import {
+  handleParkirCommand,
+  handleUnparkirCommand,
+  parkirCommandData,
+  unparkirCommandData,
+} from "./src/modules/parkingVoice.js";
+import {
   startStatsCron,
   updateServerStats,
 } from "./src/modules/statsTracker.js";
+import {
+  handleVerifyKebal,
+  verifyKebalCommandData,
+} from "./src/modules/verifyKebal.js";
 import {
   handleVoiceStateUpdate,
   syncVoiceActivity,
@@ -40,6 +44,7 @@ import {
   handleVoteMessage,
   startTopGGWebhook,
 } from "./src/modules/voteTracker.js";
+
 import { handleWelcomeMember } from "./src/modules/welcomeTracker.js";
 import { cacheUserInfo } from "./src/utils/userCache.js";
 
@@ -132,10 +137,11 @@ client.once(Events.ClientReady, async () => {
         leaderboardCommandData.toJSON(),
         parkirCommandData.toJSON(),
         unparkirCommandData.toJSON(),
+        verifyKebalCommandData.toJSON(),
       ],
     });
     console.log(
-      "✅ Guild Commands (/leaderboard, /parkir, /unparkir) berhasil terdaftar di Server TOWA!",
+      "✅ Guild Commands (/leaderboard, /parkir, /unparkir, /verify-kebal) berhasil terdaftar di Server TOWA!",
     );
   } catch (err) {
     console.error("❌ Gagal mendaftarkan Slash Command:", err.message);
@@ -174,6 +180,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
     await handleParkirCommand(interaction);
   } else if (interaction.commandName === "unparkir") {
     await handleUnparkirCommand(interaction);
+  } else if (interaction.commandName === "verify-kebal") {
+    await handleVerifyKebal(interaction);
   }
 });
 

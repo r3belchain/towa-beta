@@ -33,3 +33,7 @@ export const DISCORD_ROLE_GROUPS = [
     ],
   },
 ];
+
+export const PEJABAT_ROLE_ID = "1515470585574981813"; // ID Pejabat
+
+export const WARGA_KEBAL_ROLE_ID = "1539894592042958888"; // ID Warga Kebal
