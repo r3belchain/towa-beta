@@ -1,7 +1,7 @@
-import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
 import { PEJABAT_ROLE_ID, WARGA_KEBAL_ROLE_ID } from "../config/constants.js";
 
-//  Slash Command 
+//  Slash Command
 export const verifyKebalCommandData = new SlashCommandBuilder()
   .setName("verify-kebal")
   .setDescription(
@@ -22,7 +22,7 @@ export async function handleVerifyKebal(interaction) {
       return await interaction.reply({
         content:
           "❌ Kamu tidak memiliki wewenang `@Pejabat` untuk menggunakan command ini!",
-        ephemeral: true, 
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -34,22 +34,19 @@ export async function handleVerifyKebal(interaction) {
     if (!guildMember) {
       return await interaction.reply({
         content: "❌ Warga tidak ditemukan di server ini.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
-  
     if (guildMember.roles.cache.has(WARGA_KEBAL_ROLE_ID)) {
       return await interaction.reply({
         content: `⚠️ <@${targetUser.id}> sudah memiliki role <@&${WARGA_KEBAL_ROLE_ID}>.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
-  
     await guildMember.roles.add(WARGA_KEBAL_ROLE_ID);
 
-    
     const successEmbed = new EmbedBuilder()
       .setTitle("🛡️ Verifikasi Kebal Berhasil")
       .setColor("#2ECC71")
@@ -66,7 +63,7 @@ export async function handleVerifyKebal(interaction) {
     console.error("❌ Error pada verifyKebal:", err.message);
     return await interaction.reply({
       content: "❌ Terjadi kesalahan saat mencoba menambahkan role.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }
