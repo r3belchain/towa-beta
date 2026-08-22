@@ -8,7 +8,7 @@ export async function getLeaderboardEmbed() {
   const { data: topVoters, error } = await supabase
     .from("voter_leaderboard")
     .select(
-      "discord_user_id, total_points, disboard_bumps, discadia_bumps, topgg_votes",
+      "discord_user_id, total_points, disboard_bumps, discadia_bumps, discadia_votes, topgg_votes",
     )
     .order("total_points", { ascending: false })
     .limit(5);
@@ -27,19 +27,21 @@ export async function getLeaderboardEmbed() {
       const medal = medalEmojis[index] || "🔹";
 
       const disboard = voter.disboard_bumps || 0;
-      const discadia = voter.discadia_bumps || 0;
-      const totalBumps = disboard + discadia;
+      const discadiaBumps = voter.discadia_bumps || 0;
+      const discadiaVotes = voter.discadia_votes || 0;
+      const discadiaTotal = discadiaBumps + discadiaVotes;
       const topgg = voter.topgg_votes || 0;
 
-      return `${medal} <@${voter.discord_user_id}> — **${voter.total_points} Poin**\n   └ *(Disboard/Discadia: ${totalBumps} | Top.gg: ${topgg})*`;
+      return `${medal} <@${voter.discord_user_id}> — **${voter.total_points} Poin**\n   └ *(Disboard: ${disboard} | Discadia: ${discadiaTotal} | Top.gg: ${topgg})*`;
     })
     .join("\n\n");
 
   const instructionText =
     `\n\n──────────────────────────────\n` +
     `📌 **Cara Dukung & Vote TOWA Server:**\n` +
-    `• **Disboard & Discadia:** Ketik \`/bump\` langsung di channel vote.\n` +
-    `• **Top.gg:** [Klik di sini untuk Vote via Website Top.gg](https://top.gg/discord/servers/853760867561975808/vote)\n\n` +
+    `• **Bump Discord:** Ketik \`/bump\` untuk bot Disboard & Discadia.\n` +
+    `• **Vote Discadia:** [Klik di sini untuk Vote via Website Discadia](https://discadia.com/vote/towa-tongkrongan-warga-asbu/)\n` +
+    `• **Vote Top.gg:** [Klik di sini untuk Vote via Website Top.gg](https://top.gg/discord/servers/853760867561975808/vote)\n\n` +
     `⚡ **Bonus Weekend:** Setiap vote di Top.gg mendapatkan **2 Poin** (Berlaku Jumat 07:00 WIB – Senin 07:00 WIB)!`;
 
   return new EmbedBuilder()
@@ -78,7 +80,6 @@ export function startMonthlyResetCron(client) {
           .fetch(CHANNELS.VOTE)
           .catch(() => null);
 
-  
         const embedFinal = await getLeaderboardEmbed();
 
         if (channel) {
@@ -89,13 +90,13 @@ export function startMonthlyResetCron(client) {
           });
         }
 
-      
         const { error: resetError } = await supabase
           .from("voter_leaderboard")
           .update({
             total_points: 0,
             disboard_bumps: 0,
             discadia_bumps: 0,
+            discadia_votes: 0,
             topgg_votes: 0,
             updated_at: new Date(),
           })
