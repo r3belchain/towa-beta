@@ -16,7 +16,6 @@ export const verifyKebalCommandData = new SlashCommandBuilder()
 
 // Logic Handler Command
 export async function handleVerifyKebal(interaction) {
-  console.log("👉 NILAI BELUM_VERIF_ROLE_ID:", BELUM_VERIF_ROLE_ID);
   try {
     const executorRoles = interaction.member.roles.cache;
     if (!executorRoles.has(PEJABAT_ROLE_ID)) {
@@ -48,14 +47,7 @@ export async function handleVerifyKebal(interaction) {
 
     await guildMember.roles.add(WARGA_KEBAL_ROLE_ID);
 
-    // 🔍 Tambahkan 2 baris log ini untuk debugging
-    console.log("DEBUG BELUM_VERIF_ROLE_ID:", BELUM_VERIF_ROLE_ID);
-    console.log(
-      "DEBUG User Roles:",
-      Array.from(guildMember.roles.cache.keys()),
-    );
-
-    // 2. Hapus role @Belum Verif (jika member memilikinya)
+    // Hapus role @Belum Verif 
     let removedRoleStatus = "";
     if (guildMember.roles.cache.has(BELUM_VERIF_ROLE_ID)) {
       await guildMember.roles.remove(BELUM_VERIF_ROLE_ID);
