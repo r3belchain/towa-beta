@@ -47,6 +47,13 @@ export async function handleVerifyKebal(interaction) {
 
     await guildMember.roles.add(WARGA_KEBAL_ROLE_ID);
 
+    // 🔍 Tambahkan 2 baris log ini untuk debugging
+    console.log("DEBUG BELUM_VERIF_ROLE_ID:", BELUM_VERIF_ROLE_ID);
+    console.log(
+      "DEBUG User Roles:",
+      Array.from(guildMember.roles.cache.keys()),
+    );
+
     // 2. Hapus role @Belum Verif (jika member memilikinya)
     let removedRoleStatus = "";
     if (guildMember.roles.cache.has(BELUM_VERIF_ROLE_ID)) {

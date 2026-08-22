@@ -2,7 +2,7 @@ import "dotenv/config";
 
 export const PEJABAT_ROLE_ID = process.env.PEJABAT_ROLE_ID;
 export const WARGA_KEBAL_ROLE_ID = process.env.WARGA_KEBAL_ROLE_ID;
-export const BELUM_VERIF_ROLE_ID = process.env.BELUM_VERIF_ROLE_ID
+export const BELUM_VERIF_ROLE_ID = process.env.BELUM_VERIF_ROLE_ID;
 
 export const DISCORD_ROLE_GROUPS = [
   {
