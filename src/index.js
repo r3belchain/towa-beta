@@ -8,45 +8,39 @@ import {
   Routes,
 } from "discord.js";
 import "dotenv/config";
-import { DISCORD_ROLE_GROUPS, GUILD_ID } from "./src/config/constants.js";
+import { DISCORD_ROLE_GROUPS, GUILD_ID } from "./config/constants.js";
+
+// EVENT LISTENERS 
+import * as guildMemberAddEvent from "./events/guildMemberAdd.js";
+import * as guildMemberRemoveEvent from "./events/guildMemberRemove.js";
+import * as guildMemberUpdateEvent from "./events/guildMemberUpdate.js";
+import * as interactionCreateEvent from "./events/interactionCreate.js";
+import * as messageCreateEvent from "./events/messageCreate.js";
+import * as voiceStateUpdateEvent from "./events/voiceStateUpdate.js";
+
+// COMMAND DATA & BACKGROUND SERVICES
+
 import {
-  getLeaderboardEmbed,
   leaderboardCommandData,
   startMonthlyResetCron,
-} from "./src/modules/leaderboard.js";
+} from "./modules/vote/leaderboard.js"
 import {
-  handleGuildMemberAdd,
-  handleGuildMemberRemove,
-  handleGuildMemberUpdate,
+  parkirCommandData,
+  unparkirCommandData,
+} from "./modules/voice/parkingVoice.js";
+import {
   initialSyncRecentMembers,
   syncBoosters,
   syncRoleGroup,
-} from "./src/modules/memberTracker.js";
-import {
-  handleParkirCommand,
-  handleUnparkirCommand,
-  parkirCommandData,
-  unparkirCommandData,
-} from "./src/modules/parkingVoice.js";
+} from "./modules/stats/memberTracker.js";
 import {
   startStatsCron,
   updateServerStats,
-} from "./src/modules/statsTracker.js";
-import {
-  handleVerifyKebal,
-  verifyKebalCommandData,
-} from "./src/modules/verifyKebal.js";
-import {
-  handleVoiceStateUpdate,
-  syncVoiceActivity,
-} from "./src/modules/voiceTracker.js";
-import {
-  handleVoteMessage,
-  startTopGGWebhook,
-} from "./src/modules/voteTracker.js";
-
-import { handleWelcomeMember } from "./src/modules/welcomeTracker.js";
-import { cacheUserInfo } from "./src/utils/userCache.js";
+} from "./modules/stats/statsTracker.js";
+import { verifyKebalCommandData } from "./modules/roles/verifyKebal.js";
+import { syncVoiceActivity } from "./modules/voice/voiceTracker.js";
+import { startTopGGWebhook } from "./modules/vote/voteTracker.js";
+import { cacheUserInfo } from "./utils/userCache.js";
 
 // SETUP DISCORD CLIENT
 const client = new Client({
@@ -120,7 +114,7 @@ async function initialSync() {
   }
 }
 
-// CLIENT READY EVENT
+// CLIENT READY EVENT 
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Bot online sebagai ${client.user.tag}`);
 
@@ -150,40 +144,30 @@ client.once(Events.ClientReady, async () => {
   startMonthlyResetCron(client);
 });
 
-// EVENT LISTENERS
-client.on(Events.GuildMemberUpdate, (oldMem, newMem) =>
-  handleGuildMemberUpdate(oldMem, newMem),
-);
-client.on(Events.GuildMemberAdd, async (member) => {
-  handleGuildMemberAdd(member, client);
-  handleWelcomeMember(member, client);
-});
-client.on(Events.GuildMemberRemove, (member) =>
-  handleGuildMemberRemove(member, client),
-);
-client.on(Events.VoiceStateUpdate, (oldState, newState) =>
-  handleVoiceStateUpdate(client, oldState, newState),
-);
-client.on(Events.MessageCreate, (message) =>
-  handleVoteMessage(client, message),
+// EVENT LISTENERS MODULAR 
+client.on(guildMemberUpdateEvent.name, (oldMem, newMem) =>
+  guildMemberUpdateEvent.execute(oldMem, newMem),
 );
 
-// Listener Interaksi Slash Command
-client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
+client.on(guildMemberAddEvent.name, (member) =>
+  guildMemberAddEvent.execute(member, client),
+);
 
-  if (interaction.commandName === "leaderboard") {
-    await interaction.deferReply();
-    const embed = await getLeaderboardEmbed();
-    await interaction.editReply({ embeds: [embed] });
-  } else if (interaction.commandName === "parkir") {
-    await handleParkirCommand(interaction);
-  } else if (interaction.commandName === "unparkir") {
-    await handleUnparkirCommand(interaction);
-  } else if (interaction.commandName === "verify-kebal") {
-    await handleVerifyKebal(interaction);
-  }
-});
+client.on(guildMemberRemoveEvent.name, (member) =>
+  guildMemberRemoveEvent.execute(member, client),
+);
+
+client.on(voiceStateUpdateEvent.name, (oldState, newState) =>
+  voiceStateUpdateEvent.execute(oldState, newState, client),
+);
+
+client.on(messageCreateEvent.name, (message) =>
+  messageCreateEvent.execute(message, client),
+);
+
+client.on(interactionCreateEvent.name, (interaction) =>
+  interactionCreateEvent.execute(interaction),
+);
 
 // LOGIN
 client.login(process.env.DISCORD_BOT_TOKEN);

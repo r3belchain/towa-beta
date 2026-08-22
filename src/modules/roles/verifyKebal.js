@@ -1,5 +1,5 @@
 import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
-import { PEJABAT_ROLE_ID, WARGA_KEBAL_ROLE_ID } from "../config/constants.js";
+import { PEJABAT_ROLE_ID, WARGA_KEBAL_ROLE_ID } from "../../config/constants.js";
 
 //  Slash Command
 export const verifyKebalCommandData = new SlashCommandBuilder()

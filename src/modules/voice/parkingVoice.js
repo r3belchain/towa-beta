@@ -1,15 +1,15 @@
 import {
-  EmbedBuilder,
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-} from "discord.js";
-import {
-  joinVoiceChannel,
-  getVoiceConnection,
-  VoiceConnectionStatus,
   entersState,
+  getVoiceConnection,
+  joinVoiceChannel,
+  VoiceConnectionStatus,
 } from "@discordjs/voice";
-import { ALLOWED_ROLE_IDS } from "../config/constants.js";
+import {
+  EmbedBuilder,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+} from "discord.js";
+import { PEJABAT_ROLE_ID, IS_PRODUCTION } from "../../config/constants.js";
 
 // 1. DEFINISI SLASH COMMAND
 export const parkirCommandData = new SlashCommandBuilder()
@@ -26,14 +26,21 @@ export function hasParkirPermission(member) {
   // Administrator selalu diizinkan
   if (member.permissions?.has(PermissionFlagsBits.Administrator)) return true;
 
- 
-  return ALLOWED_ROLE_IDS.some((roleId) =>
-    member.roles.cache.has(roleId),
-  );
+  return member.roles.cache.has(PEJABAT_ROLE_ID);
 }
 
 // 2. HANDLER COMMAND /parkir
 export async function handleParkirCommand(interaction) {
+  // WAJIB ADA: Supaya tidak bentrok dengan BotGhost yang masih aktif di Server Asli.
+  // Jadi, ketika masih testing di TOWA, WAJIB menggunakan if (IS_PRODUCTION) return;*
+  if (IS_PRODUCTION) {
+    return interaction.reply({
+      content:
+        "❌ Fitur /parkir masih dalam tahap pengujian dan belum aktif di server utama!",
+      ephemeral: true,
+    });
+  }
+
   if (!hasParkirPermission(interaction.member)) {
     return interaction.reply({
       content:
@@ -102,6 +109,16 @@ export async function handleParkirCommand(interaction) {
 
 // 3. HANDLER COMMAND /unparkir
 export async function handleUnparkirCommand(interaction) {
+  // WAJIB ADA: Supaya tidak bentrok dengan BotGhost yang masih aktif di Server Asli.
+  // Jadi, ketika masih testing di TOWA, WAJIB menggunakan if (IS_PRODUCTION) return;*
+ if (IS_PRODUCTION) {
+   return interaction.reply({
+     content:
+       "❌ Fitur /unparkir masih dalam tahap pengujian dan belum aktif di server utama!",
+     ephemeral: true,
+   });
+ }
+
   if (!hasParkirPermission(interaction.member)) {
     return interaction.reply({
       content:

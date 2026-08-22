@@ -1,6 +1,6 @@
-import { supabase } from "../config/supabase.js";
-import { GUILD_ID, DISCORD_ROLE_GROUPS } from "../config/constants.js";
-import { cacheUserInfo, userInfoCache } from "../utils/userCache.js";
+import { DISCORD_ROLE_GROUPS, GUILD_ID } from "../../config/constants.js";
+import { supabase } from "../../config/supabase.js";
+import { cacheUserInfo, userInfoCache } from "../../utils/userCache.js";
 import { updateServerStats } from "./statsTracker.js";
 
 export async function syncRoleGroup(members, tableName, roleIds) {

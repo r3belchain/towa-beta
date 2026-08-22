@@ -1,13 +1,12 @@
-import { GUILD_ID } from "../config/constants.js";
-import { supabase } from "../config/supabase.js";
-
+import { GUILD_ID } from "../../config/constants.js";
+import { supabase } from "../../config/supabase.js";
 
 export async function updateServerStats(client) {
   try {
     const guild = await client.guilds.fetch({
       guild: GUILD_ID,
       withCounts: true,
-      force: true, 
+      force: true,
     });
 
     if (!guild) return;

@@ -1,37 +1,11 @@
-import crypto from "crypto";
 import express from "express";
 import {
-  DISBOARD_BOT_ID,
-  DISCADIA_BOT_ID,
-  TOPGG_WEBHOOK_AUTH,
-  VOTE_CHANNEL_ID,
-} from "../config/constants.js";
-import { supabase } from "../config/supabase.js";
-
-// Fungsi helper verifikasi signature Top.gg
-function verifyWebhook(rawBody, signature, secret) {
-  if (!signature || !secret || !rawBody) return false;
-  try {
-    const [tPart, v1Part] = signature.split(",");
-    if (!tPart || !v1Part) return false;
-
-    const timestamp = tPart.split("=")[1];
-    const receivedSig = v1Part.split("=")[1];
-
-    const expected = crypto
-      .createHmac("sha256", secret)
-      .update(`${timestamp}.${rawBody}`)
-      .digest("hex");
-
-    const bufExpected = Buffer.from(expected, "utf8");
-    const bufReceived = Buffer.from(receivedSig, "utf8");
-
-    if (bufExpected.length !== bufReceived.length) return false;
-    return crypto.timingSafeEqual(bufExpected, bufReceived);
-  } catch (err) {
-    return false;
-  }
-}
+  EXTERNAL_BOTS,
+  WEBHOOK_SECRETS,
+  CHANNELS,
+} from "../../config/constants.js";
+import { supabase } from "../../config/supabase.js";
+import { verifyTopGGWebhook } from "../../utils/webhookVerifier.js";
 
 async function addVoterPoint(client, userId, source) {
   try {
@@ -70,7 +44,7 @@ async function addVoterPoint(client, userId, source) {
       updateData.topgg_votes = (userExist?.topgg_votes || 0) + 1;
     }
 
-    // ambil username terbaru dari Discord
+    // Ambil username terbaru dari Discord
     const userDiscord = await client.users.fetch(userId).catch(() => null);
     if (userDiscord) updateData.username = userDiscord.username;
 
@@ -88,10 +62,10 @@ async function addVoterPoint(client, userId, source) {
 
     console.log(`🌟 [+1 Poin ${source}] disinkronkan untuk User ID: ${userId}`);
 
-    // Kirim notifikasi JIKA data berhasil masuk ke DB
-    if (VOTE_CHANNEL_ID) {
+   
+    if (CHANNELS.VOTE) {
       const channel = await client.channels
-        .fetch(VOTE_CHANNEL_ID)
+        .fetch(CHANNELS.VOTE)
         .catch(() => null);
       if (channel) {
         await channel.send(
@@ -108,11 +82,11 @@ async function addVoterPoint(client, userId, source) {
 }
 
 export async function handleVoteMessage(client, message) {
-  // LAPISAN FILTER EARLY EXIT
-  if (message.channelId !== VOTE_CHANNEL_ID) return;
+  if (message.channelId !== CHANNELS.VOTE) return;
 
-  const isDisboard = message.author.id === DISBOARD_BOT_ID;
-  const isDiscadia = message.author.id === DISCADIA_BOT_ID;
+
+  const isDisboard = message.author.id === EXTERNAL_BOTS.DISBOARD;
+  const isDiscadia = message.author.id === EXTERNAL_BOTS.DISCADIA;
 
   if (!isDisboard && !isDiscadia) return;
 
@@ -157,11 +131,12 @@ export function startTopGGWebhook(client) {
   app.post("/webhook/topgg", async (req, res) => {
     try {
       const signature = req.headers["x-topgg-signature"];
-      const secret = TOPGG_WEBHOOK_AUTH;
+
+      const secret = WEBHOOK_SECRETS.TOPGG;
       const rawBody = req.rawBody;
 
-      // HMAC SHA-256
-      if (!verifyWebhook(rawBody, signature, secret)) {
+      // HMAC SHA-256 Verifier (Menggunakan Helper)
+      if (!verifyTopGGWebhook(rawBody, signature, secret)) {
         console.warn("⚠️ [Top.gg] Ditolak: Invalid HMAC SHA-256 Signature.");
         return res.status(401).json({ error: "Unauthorized" });
       }
@@ -173,7 +148,9 @@ export function startTopGGWebhook(client) {
       // Test vs Real Vote
       if (eventType === "webhook.test") {
         console.log(
-          `🛠️ [Top.gg] Test Webhook sukses diterima dari tester: ${data.user?.name || "System"}`,
+          `🛠️ [Top.gg] Test Webhook sukses diterima dari tester: ${
+            data.user?.name || "System"
+          }`,
         );
         return res.status(200).json({ status: "test_ok" });
       }
@@ -196,13 +173,11 @@ export function startTopGGWebhook(client) {
 
         // DATABASE EXECUTION
         let isSuccess = true;
-        // double vote weekend
         for (let i = 0; i < weight; i++) {
           const result = await addVoterPoint(client, userId, "Top.gg");
           if (!result) isSuccess = false;
         }
 
-        // pola Ack-Wait
         if (isSuccess) {
           return res.status(200).json({ status: "ok" });
         } else {

@@ -1,6 +1,6 @@
-import { supabase } from "../config/supabase.js";
-import { GUILD_ID } from "../config/constants.js";
-import { userInfoCache, resolveUserInfo } from "../utils/userCache.js";
+import { supabase } from "../../config/supabase.js";
+import { GUILD_ID } from "../../config/constants.js";
+import { userInfoCache, resolveUserInfo } from "../../utils/userCache.js";
 
 export async function syncVoiceActivity(guild) {
   try {

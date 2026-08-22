@@ -1,7 +1,7 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import cron from "node-cron";
-import { VOTE_CHANNEL_ID } from "../config/constants.js";
-import { supabase } from "../config/supabase.js";
+import { CHANNELS } from "../../config/constants.js";
+import { supabase } from "../../config/supabase.js";
 
 // Helper Fetch & Format Top 5 Embed
 export async function getLeaderboardEmbed() {
@@ -71,11 +71,11 @@ export function startMonthlyResetCron(client) {
       console.log(
         "⏰ [CRON] Menjalankan Rekap Pemenang & Reset Poin Bulanan...",
       );
-      if (!VOTE_CHANNEL_ID) return;
+      if (!CHANNELS.VOTE) return;
 
       try {
         const channel = await client.channels
-          .fetch(VOTE_CHANNEL_ID)
+          .fetch(CHANNELS.VOTE)
           .catch(() => null);
 
   
