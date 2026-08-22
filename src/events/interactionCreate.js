@@ -1,5 +1,5 @@
 import { Events } from "discord.js";
-// Sesuaikan path import dengan nama folder barumu!
+
 import { getLeaderboardEmbed } from "../modules/vote/leaderboard.js";
 import {
   handleParkirCommand,

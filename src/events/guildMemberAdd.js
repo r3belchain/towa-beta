@@ -1,5 +1,5 @@
 import { Events } from "discord.js";
-// Sesuaikan path import
+
 import { handleGuildMemberAdd } from "../modules/stats/memberTracker.js";
 import { handleWelcomeMember } from "../modules/welcome/welcomeTracker.js";
 
