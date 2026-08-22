@@ -21,7 +21,7 @@ export async function updateServerStats(client) {
       .eq("id", 1);
   } catch (err) {
     console.error("❌ Error update stats:", err.message);
-  }
+  } 
 }
 
 export function startStatsCron(client) {

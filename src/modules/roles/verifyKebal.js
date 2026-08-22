@@ -1,5 +1,5 @@
 import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
-import { PEJABAT_ROLE_ID, WARGA_KEBAL_ROLE_ID } from "../../config/constants.js";
+import { PEJABAT_ROLE_ID, WARGA_KEBAL_ROLE_ID, BELUM_VERIF_ROLE_ID } from "../../config/constants.js";
 
 //  Slash Command
 export const verifyKebalCommandData = new SlashCommandBuilder()
@@ -47,6 +47,13 @@ export async function handleVerifyKebal(interaction) {
 
     await guildMember.roles.add(WARGA_KEBAL_ROLE_ID);
 
+    // 2. Hapus role @Belum Verif (jika member memilikinya)
+    let removedRoleStatus = "";
+    if (guildMember.roles.cache.has(BELUM_VERIF_ROLE_ID)) {
+      await guildMember.roles.remove(BELUM_VERIF_ROLE_ID);
+      removedRoleStatus = `\n🗑️ **Role Dihapus:** <@&${BELUM_VERIF_ROLE_ID}>`;
+    }
+
     const successEmbed = new EmbedBuilder()
       .setTitle("🛡️ Verifikasi Kebal Berhasil")
       .setColor("#2ECC71")
@@ -54,6 +61,7 @@ export async function handleVerifyKebal(interaction) {
         `Akses khusus telah diberikan!\n\n` +
           `👤 **Warga:** <@${targetUser.id}>\n` +
           `🎖️ **Role Diberikan:** <@&${WARGA_KEBAL_ROLE_ID}>\n` +
+          `${removedRoleStatus}\n` +
           `👑 **Diverifikasi Oleh:** <@${interaction.user.id}>`,
       )
       .setTimestamp();
