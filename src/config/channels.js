@@ -1,6 +1,6 @@
 import "dotenv/config";
 
-export const CHANNELS = { 
+export const CHANNELS = {
   WELCOME: process.env.WELCOME_CHANNEL_ID,
   VOTE: process.env.VOTE_CHANNEL_ID,
 };
@@ -13,4 +13,5 @@ export const EXTERNAL_BOTS = {
 
 export const WEBHOOK_SECRETS = {
   TOPGG: process.env.TOPGG_WEBHOOK_AUTH,
+  DISCADIA: process.env.DISCADIA_WEBHOOK_SECRET,
 };
