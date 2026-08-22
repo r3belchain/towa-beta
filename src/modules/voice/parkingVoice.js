@@ -33,13 +33,13 @@ export function hasParkirPermission(member) {
 export async function handleParkirCommand(interaction) {
   // WAJIB ADA: Supaya tidak bentrok dengan BotGhost yang masih aktif di Server Asli.
   // Jadi, ketika masih testing di TOWA, WAJIB menggunakan if (IS_PRODUCTION) return;*
-  if (IS_PRODUCTION) {
-    return interaction.reply({
-      content:
-        "❌ Fitur /parkir masih dalam tahap pengujian dan belum aktif di server utama!",
-      ephemeral: true,
-    });
-  }
+  // if (IS_PRODUCTION) {
+  //   return interaction.reply({
+  //     content:
+  //       "❌ Fitur /parkir masih dalam tahap pengujian dan belum aktif di server utama!",
+  //     ephemeral: true,
+  //   });
+  // }
 
   if (!hasParkirPermission(interaction.member)) {
     return interaction.reply({
@@ -111,13 +111,13 @@ export async function handleParkirCommand(interaction) {
 export async function handleUnparkirCommand(interaction) {
   // WAJIB ADA: Supaya tidak bentrok dengan BotGhost yang masih aktif di Server Asli.
   // Jadi, ketika masih testing di TOWA, WAJIB menggunakan if (IS_PRODUCTION) return;*
- if (IS_PRODUCTION) {
-   return interaction.reply({
-     content:
-       "❌ Fitur /unparkir masih dalam tahap pengujian dan belum aktif di server utama!",
-     ephemeral: true,
-   });
- }
+//  if (IS_PRODUCTION) {
+//    return interaction.reply({
+//      content:
+//        "❌ Fitur /unparkir masih dalam tahap pengujian dan belum aktif di server utama!",
+//      ephemeral: true,
+//    });
+//  }
 
   if (!hasParkirPermission(interaction.member)) {
     return interaction.reply({
