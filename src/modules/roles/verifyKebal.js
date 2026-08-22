@@ -16,6 +16,7 @@ export const verifyKebalCommandData = new SlashCommandBuilder()
 
 // Logic Handler Command
 export async function handleVerifyKebal(interaction) {
+  console.log("👉 NILAI BELUM_VERIF_ROLE_ID:", BELUM_VERIF_ROLE_ID);
   try {
     const executorRoles = interaction.member.roles.cache;
     if (!executorRoles.has(PEJABAT_ROLE_ID)) {
