@@ -2,8 +2,8 @@ import express from "express";
 import {
   CHANNELS,
   EXTERNAL_BOTS,
-  WEBHOOK_SECRETS,
   GUILD_ID,
+  WEBHOOK_SECRETS,
 } from "../../config/constants.js";
 import { supabase } from "../../config/supabase.js";
 import { verifyTopGGWebhook } from "../../utils/webhookVerifier.js";
@@ -199,14 +199,6 @@ export function startTopGGWebhook(client) {
 
   app.post("/webhook/discadia", async (req, res) => {
     try {
-      const authHeader = req.headers["authorization"];
-      if (authHeader !== WEBHOOK_SECRETS.DISCADIA) {
-        console.warn(
-          "⚠️ [Discadia] Ditolak: Authorization secret tidak valid/hilang.",
-        );
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-
       const { user_id, guild_id } = req.body;
 
       if (guild_id !== GUILD_ID) {
