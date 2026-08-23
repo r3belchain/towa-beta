@@ -66,7 +66,7 @@ export const leaderboardCommandData = new SlashCommandBuilder()
 
 // Cronjob bulanan
 export function startMonthlyResetCron(client) {
-  // Menit 0, Jam 0, Tanggal 1, Setiap Bulan
+  // Menit 0, Jam 0, Tanggal 1, Setiap Bulan (WIB)
   cron.schedule(
     "0 0 1 * *",
     async () => {
@@ -75,21 +75,36 @@ export function startMonthlyResetCron(client) {
       );
       if (!CHANNELS.VOTE) return;
 
+      let embedFinal = null;
+      try {
+        embedFinal = await getLeaderboardEmbed();
+      } catch (e) {
+        console.error("❌ Gagal membuat embed leaderboard:", e.message);
+      }
+
       try {
         const channel = await client.channels
           .fetch(CHANNELS.VOTE)
           .catch(() => null);
 
-        const embedFinal = await getLeaderboardEmbed();
-
-        if (channel) {
+        if (channel && embedFinal) {
           await channel.send({
             content:
               "🎉 **[PENGUMUMAN PEMENANG VOTE BULAN INI]** 🎉\nSelamat kepada para pemenang leaderboard! Tim Mekanik TOWA akan segera membagikan role reward secara manual.\n\n*Poin leaderboard resmi di-reset ke 0 untuk periode bulan baru.*",
             embeds: [embedFinal],
           });
+          console.log(
+            "📢 [CRON] Pengumuman pemenang berhasil dikirim ke channel.",
+          );
         }
+      } catch (discordErr) {
+        console.error(
+          "⚠️ [CRON] Gagal mengirim pengumuman ke Discord:",
+          discordErr.message,
+        );
+      }
 
+      try {
         const { error: resetError } = await supabase
           .from("voter_leaderboard")
           .update({
@@ -98,7 +113,7 @@ export function startMonthlyResetCron(client) {
             discadia_bumps: 0,
             discadia_votes: 0,
             topgg_votes: 0,
-            updated_at: new Date(),
+            updated_at: new Date().toISOString(),
           })
           .neq("discord_user_id", "0");
 
@@ -112,8 +127,8 @@ export function startMonthlyResetCron(client) {
             "✅ Berhasil mereset seluruh poin leaderboard di Supabase ke 0.",
           );
         }
-      } catch (err) {
-        console.error("❌ Error pada cronjob reset bulanan:", err.message);
+      } catch (dbErr) {
+        console.error("❌ Error saat query reset database:", dbErr.message);
       }
     },
     {
