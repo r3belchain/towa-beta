@@ -1,11 +1,12 @@
 import { Events } from "discord.js";
 
-import { getLeaderboardEmbed } from "../modules/vote/leaderboard.js";
+import { handleVerifyGirl } from "../modules/roles/verifyGirl.js";
+import { handleVerifyKebal } from "../modules/roles/verifyKebal.js";
 import {
   handleParkirCommand,
   handleUnparkirCommand,
 } from "../modules/voice/parkingVoice.js";
-import { handleVerifyKebal } from "../modules/roles/verifyKebal.js";
+import { getLeaderboardEmbed } from "../modules/vote/leaderboard.js";
 
 export const name = Events.InteractionCreate;
 
@@ -22,5 +23,7 @@ export async function execute(interaction) {
     await handleUnparkirCommand(interaction);
   } else if (interaction.commandName === "verify-kebal") {
     await handleVerifyKebal(interaction);
+  } else if (interaction.commandName === "verify-girl") {
+    await handleVerifyGirl(interaction);
   }
 }
