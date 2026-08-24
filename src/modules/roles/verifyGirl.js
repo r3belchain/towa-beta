@@ -5,12 +5,10 @@ import {
   GIRL_ID,
 } from "../../config/constants.js";
 
-//  Slash Command
+// Slash Command
 export const verifyGirlCommandData = new SlashCommandBuilder()
   .setName("verify-girl")
-  .setDescription(
-    "Memberikan akses role @Girl secara instan",
-  )
+  .setDescription("Memberikan akses role @Girl secara instan")
   .addUserOption((option) =>
     option
       .setName("user")
@@ -21,31 +19,40 @@ export const verifyGirlCommandData = new SlashCommandBuilder()
 // Logic Handler Command
 export async function handleVerifyGirl(interaction) {
   try {
+    
+    await interaction.deferReply();
+
     const executorRoles = interaction.member.roles.cache;
     if (!executorRoles.has(GIRL_STAFF_ID)) {
-      return await interaction.reply({
+    
+      return await interaction.editReply({
         content:
           "❌ Kamu tidak memiliki wewenang `@Girl Staff` untuk menggunakan command ini!",
-        flags: MessageFlags.Ephemeral,
       });
     }
 
     const targetUser = interaction.options.getUser("user");
+
+  
+    if (targetUser.bot) {
+      return await interaction.editReply({
+        content: "❌ Kamu tidak bisa mem-verifikasi Bot!",
+      });
+    }
+
     const guildMember = await interaction.guild.members
       .fetch(targetUser.id)
       .catch(() => null);
 
     if (!guildMember) {
-      return await interaction.reply({
+      return await interaction.editReply({
         content: "❌ Warga tidak ditemukan di server ini.",
-        flags: MessageFlags.Ephemeral,
       });
     }
 
     if (guildMember.roles.cache.has(GIRL_ID)) {
-      return await interaction.reply({
+      return await interaction.editReply({
         content: `⚠️ <@${targetUser.id}> sudah memiliki role <@&${GIRL_ID}>.`,
-        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -70,12 +77,15 @@ export async function handleVerifyGirl(interaction) {
       )
       .setTimestamp();
 
-    return await interaction.reply({ embeds: [successEmbed] });
+    return await interaction.editReply({ embeds: [successEmbed] });
   } catch (err) {
     console.error("❌ Error pada verifyGirl:", err.message);
-    return await interaction.reply({
-      content: "❌ Terjadi kesalahan saat mencoba menambahkan role.",
-      flags: MessageFlags.Ephemeral,
-    });
+
+
+    if (interaction.deferred || interaction.replied) {
+      return await interaction.editReply({
+        content: "❌ Terjadi kesalahan saat mencoba menambahkan role.",
+      });
+    }
   }
 }
