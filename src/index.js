@@ -38,6 +38,7 @@ import {
   updateServerStats,
 } from "./modules/stats/statsTracker.js";
 import { verifyKebalCommandData } from "./modules/roles/verifyKebal.js";
+import { verifyGirlCommandData } from "./modules/roles/verifyGirl.js";
 import { syncVoiceActivity } from "./modules/voice/voiceTracker.js";
 import { startTopGGWebhook } from "./modules/vote/voteTracker.js";
 import { cacheUserInfo } from "./utils/userCache.js";
@@ -132,6 +133,7 @@ client.once(Events.ClientReady, async () => {
         parkirCommandData.toJSON(),
         unparkirCommandData.toJSON(),
         verifyKebalCommandData.toJSON(),
+        verifyGirlCommandData.toJSON(),
       ],
     });
     console.log(
