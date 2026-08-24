@@ -97,23 +97,36 @@ export async function handleVoteMessage(client, message) {
   try {
     let platform = isDisboard ? "Disboard" : "Discadia";
 
-    // Validasi kalimat dari bot marketplace
-    const isSuccess =
-      message.embeds.some((e) =>
-        e.description?.toLowerCase().includes("bump done"),
-      ) ||
-      message.content.toLowerCase().includes("bump done") ||
-      message.embeds.some((e) =>
-        e.description?.toLowerCase().includes("bumped"),
-      );
+    const contentStr = message.content.toLowerCase();
+    const embedsStr = message.embeds
+      .map((e) => `${e.title || ""} ${e.description || ""}`)
+      .join(" ")
+      .toLowerCase();
+
+    const fullText = `${contentStr} ${embedsStr}`;
+
+    let isSuccess = false;
+
+    if (platform === "Disboard") {
+      isSuccess = fullText.includes("bump done");
+    } else if (platform === "Discadia") {
+      isSuccess =
+        fullText.includes("successfully bumped") &&
+        !fullText.includes("already bumped recently");
+    }
 
     if (isSuccess) {
-      // Ambil ID warga dari object interaction
       const userId =
-        message.interaction?.user?.id || message.mentions.users.first()?.id;
+        message.interaction?.user?.id ||
+        message.interactionMetadata?.user?.id ||
+        message.mentions.users.first()?.id;
 
       if (userId) {
         await addVoterPoint(client, userId, platform);
+      } else {
+        console.warn(
+          `⚠️ [${platform}] Bump sukses, tapi User ID gagal diekstrak!`,
+        );
       }
     }
   } catch (err) {
