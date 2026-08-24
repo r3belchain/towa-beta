@@ -1,11 +1,11 @@
-import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import {
   BELUM_VERIF_ROLE_ID,
   PEJABAT_ROLE_ID,
   WARGA_KEBAL_ROLE_ID,
 } from "../../config/constants.js";
 
-//  Slash Command
+// Slash Command
 export const verifyKebalCommandData = new SlashCommandBuilder()
   .setName("verify-kebal")
   .setDescription(
@@ -21,31 +21,40 @@ export const verifyKebalCommandData = new SlashCommandBuilder()
 // Logic Handler Command
 export async function handleVerifyKebal(interaction) {
   try {
+    // 1. DEFER REPLY (WAJIB ADA UNTUK ANTI-TIMEOUT)
+    await interaction.deferReply();
+
     const executorRoles = interaction.member.roles.cache;
     if (!executorRoles.has(PEJABAT_ROLE_ID)) {
-      return await interaction.reply({
+      // 2. GANTI REPLY MENJADI EDITREPLY
+      return await interaction.editReply({
         content:
           "❌ Kamu tidak memiliki wewenang `@Pejabat` untuk menggunakan command ini!",
-        flags: MessageFlags.Ephemeral,
       });
     }
 
     const targetUser = interaction.options.getUser("user");
+
+    // [TAMBAHAN] Cegah eksekusi ke Bot Discord
+    if (targetUser.bot) {
+      return await interaction.editReply({
+        content: "❌ Kamu tidak bisa mem-verifikasi Bot!",
+      });
+    }
+
     const guildMember = await interaction.guild.members
       .fetch(targetUser.id)
       .catch(() => null);
 
     if (!guildMember) {
-      return await interaction.reply({
+      return await interaction.editReply({
         content: "❌ Warga tidak ditemukan di server ini.",
-        flags: MessageFlags.Ephemeral,
       });
     }
 
     if (guildMember.roles.cache.has(WARGA_KEBAL_ROLE_ID)) {
-      return await interaction.reply({
+      return await interaction.editReply({
         content: `⚠️ <@${targetUser.id}> sudah memiliki role <@&${WARGA_KEBAL_ROLE_ID}>.`,
-        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -55,7 +64,7 @@ export async function handleVerifyKebal(interaction) {
     let removedRoleStatus = "";
     if (guildMember.roles.cache.has(BELUM_VERIF_ROLE_ID)) {
       await guildMember.roles.remove(BELUM_VERIF_ROLE_ID);
-      removedRoleStatus = `\n🗑️ **Role Dihapus:** <@&${BELUM_VERIF_ROLE_ID}>`;
+      removedRoleStatus = `🗑️ **Role Dihapus:** <@&${BELUM_VERIF_ROLE_ID}>`;
     }
 
     const successEmbed = new EmbedBuilder()
@@ -70,12 +79,15 @@ export async function handleVerifyKebal(interaction) {
       )
       .setTimestamp();
 
-    return await interaction.reply({ embeds: [successEmbed] });
+    return await interaction.editReply({ embeds: [successEmbed] });
   } catch (err) {
     console.error("❌ Error pada verifyKebal:", err.message);
-    return await interaction.reply({
-      content: "❌ Terjadi kesalahan saat mencoba menambahkan role.",
-      flags: MessageFlags.Ephemeral,
-    });
+
+    // Fallback error handling dengan pengecekan status interaction
+    if (interaction.deferred || interaction.replied) {
+      return await interaction.editReply({
+        content: "❌ Terjadi kesalahan saat mencoba menambahkan role.",
+      });
+    }
   }
 }
