@@ -137,7 +137,7 @@ client.once(Events.ClientReady, async () => {
       ],
     });
     console.log(
-      "✅ Guild Commands (/leaderboard, /parkir, /unparkir, /verify-kebal) berhasil terdaftar di Server TOWA!",
+      "✅ Guild Commands (/leaderboard, /parkir, /unparkir, /verify-kebal /verify-girl) berhasil terdaftar di Server TOWA!",
     );
   } catch (err) {
     console.error("❌ Gagal mendaftarkan Slash Command:", err.message);
