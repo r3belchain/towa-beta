@@ -1,0 +1,290 @@
+import {
+  ActionRowBuilder,
+  AttachmentBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelType,
+  ComponentType,
+  EmbedBuilder,
+  PermissionFlagsBits,
+  StringSelectMenuBuilder,
+} from "discord.js";
+
+import {
+  CHANNELS,
+} from "../../config/constants.js";
+import { supabase } from "../../config/supabase.js";
+
+// HANDLER TICKET_CREATE
+export async function handleTicketOpen(interaction) {
+  await interaction.deferReply({ ephemeral: true });
+  const { guild, user } = interaction;
+
+  try {
+    const existingChannel = guild.channels.cache.find(
+      (c) => c.name.startsWith("ticket-") && c.topic?.includes(user.id),
+    );
+    if (existingChannel) {
+      return await interaction.editReply(
+        `❌ Kamu sudah memiliki tiket yang terbuka di <#${existingChannel.id}>`,
+      );
+    }
+
+    const { data: categories, error } = await supabase
+      .from("ticket_categories")
+      .select("*");
+    if (error) throw error;
+
+    let selectedCategoryName = "Default";
+    let staffRoleIds = [];
+
+    if (categories && categories.length > 0) {
+      const options = categories.map((cat) => ({
+        label: cat.name,
+        value: cat.name,
+        description: `Buka tiket untuk kategori ${cat.name}`,
+      }));
+
+      const menuRow = new ActionRowBuilder().addComponents(
+        new StringSelectMenuBuilder()
+          .setCustomId("ticket_category_select")
+          .setPlaceholder("Pilih kategori tiket yang sesuai...")
+          .addOptions(options),
+      );
+
+      await interaction.editReply({
+        content: "Silakan pilih kategori tiketmu di bawah ini:",
+        components: [menuRow],
+      });
+
+      const menuInteraction = await interaction.channel
+        .awaitMessageComponent({
+          componentType: ComponentType.StringSelect,
+          filter: (i) =>
+            i.customId === "ticket_category_select" && i.user.id === user.id,
+          time: 60000,
+        })
+        .catch(() => null);
+
+      if (!menuInteraction) {
+        return await interaction.editReply({
+          content: "⏱️ Waktu habis. Silakan klik tombol 'Buka Tiket' lagi.",
+          components: [],
+        });
+      }
+
+      await menuInteraction.deferUpdate();
+
+      selectedCategoryName = menuInteraction.values[0];
+      const selectedCategoryData = categories.find(
+        (cat) => cat.name === selectedCategoryName,
+      );
+
+      if (selectedCategoryData && selectedCategoryData.staff_roles) {
+        staffRoleIds = selectedCategoryData.staff_roles
+          .split(",")
+          .map((r) => r.trim());
+      }
+    }
+
+    await interaction.editReply({
+      content: "⏳ Sedang menyiapkan ruangan tiketmu...",
+      components: [],
+    });
+
+   const ticketNumber = Math.floor(1000 + Math.random() * 9000);
+   const channelName = `ticket-${ticketNumber}`;
+
+    const permissionOverwrites = [
+      {
+        id: guild.roles.everyone.id,
+        deny: [PermissionFlagsBits.ViewChannel],
+      },
+      {
+        id: user.id,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory,
+        ],
+      },
+      {
+        id: guild.members.me.id,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.ManageChannels,
+        ],
+      },
+    ];
+
+    if (staffRoleIds.length > 0) {
+      staffRoleIds.forEach((roleId) => {
+        const role = guild.roles.cache.get(roleId);
+        if (role) {
+          permissionOverwrites.push({
+            id: role.id,
+            allow: [
+              PermissionFlagsBits.ViewChannel,
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.ReadMessageHistory,
+            ],
+          });
+        }
+      });
+    }
+
+    // Private Channel
+   const ticketChannel = await guild.channels.create({
+     name: channelName, 
+     type: ChannelType.GuildText,
+     topic: `ticket|${user.id}|${selectedCategoryName}`,
+     permissionOverwrites,
+   });
+
+    // Sambutan di dalam Channel Tiket
+    const embed = new EmbedBuilder()
+      .setTitle(`🎫 Tiket #${ticketNumber} - ${selectedCategoryName}`)
+      .setColor("#2ECC71")
+      .setDescription(
+        `Halo <@${user.id}>!\n\n` +
+          `Terima kasih telah menghubungi kami. Tim Staff akan segera merespons tiketmu.\n` +
+          `Silakan jelaskan keperluanmu secara detail di bawah ini.`,
+      )
+      .setFooter({
+        text: "Sistem Tiket TOWA • Klik tombol 🔒 untuk menutup tiket",
+      });
+
+    const closeBtnRow = new ActionRowBuilder().addComponents(
+      new ButtonBuilder()
+        .setCustomId("TICKET_CLOSE")
+        .setLabel("Tutup Tiket")
+        .setEmoji("🔒")
+        .setStyle(ButtonStyle.Danger),
+    );
+
+    // Ping user dan ping staff
+    const staffPing = staffRoleIds.map((id) => `<@&${id}>`).join(" ");
+    await ticketChannel.send({
+      content: `<@${user.id}> ${staffPing}`,
+      embeds: [embed],
+      components: [closeBtnRow],
+    });
+
+    return await interaction.editReply(
+      `✅ Tiket berhasil dibuat! Silakan menuju ke <#${ticketChannel.id}>`,
+    );
+  } catch (err) {
+    console.error("❌ Error Create Ticket:", err);
+    return await interaction.editReply(
+      "❌ Terjadi kesalahan saat mencoba membuat tiket.",
+    );
+  }
+}
+
+// HANDLER PENUTUPAN TIKET (TICKET_CLOSE)
+
+export async function handleTicketClose(interaction) {
+  const { channel, user, guild } = interaction;
+
+  if (!channel.name.startsWith("ticket-")) {
+    return await interaction.reply({
+      content: "❌ Tombol ini hanya berfungsi di dalam channel tiket.",
+      ephemeral: true,
+    });
+  }
+
+  await interaction.deferReply();
+
+  try {
+    await interaction.editReply(
+      "🔒 Sedang menutup tiket dan membuat transkrip percakapan...",
+    );
+
+    const messages = await channel.messages.fetch({ limit: 100 });
+    const reversedMessages = Array.from(messages.values()).reverse();
+
+    let transcriptContent = `=== TRANSKRIP TIKET: ${channel.name} ===\n`;
+    transcriptContent += `=== Ditutup oleh: ${user.tag} pada ${new Date().toLocaleString("id-ID")} ===\n\n`;
+
+    reversedMessages.forEach((m) => {
+      if (m.author.bot && m.embeds.length > 0 && !m.content) return;
+
+      const time = new Date(m.createdAt).toLocaleTimeString("id-ID");
+      transcriptContent += `[${time}] ${m.author.username}: ${m.cleanContent}\n`;
+      if (m.attachments.size > 0) {
+        transcriptContent += `[File Lampiran]: ${m.attachments.map((a) => a.proxyURL).join(", ")}\n`;
+      }
+    });
+
+    const transcriptFile = new AttachmentBuilder(
+      Buffer.from(transcriptContent, "utf-8"),
+      { name: `${channel.name}-transcript.txt` },
+    );
+
+    const topicSplit = channel.topic ? channel.topic.split("|") : [];
+    const ticketOwnerId = topicSplit[1];
+    const categoryName = topicSplit[2] || "Lainnya";
+
+    // CHANNEL TICKET LOGS
+    const logChannelId = CHANNELS.TICKETLOGS
+    if (logChannelId) {
+      const logChannel = guild.channels.cache.get(logChannelId);
+      if (logChannel) {
+        const logEmbed = new EmbedBuilder()
+          .setTitle(`📑 Arsip Tiket: ${channel.name}`)
+          .setColor("#3498DB")
+          .addFields(
+            { name: "Ditutup oleh", value: `<@${user.id}>`, inline: true },
+            {
+              name: "Pemilik Tiket",
+              value: ticketOwnerId ? `<@${ticketOwnerId}>` : "Tidak diketahui",
+              inline: true,
+            },
+            { name: "Kategori", value: categoryName, inline: true },
+          )
+          .setTimestamp();
+
+        await logChannel
+          .send({
+            embeds: [logEmbed],
+            files: [transcriptFile],
+          })
+          .catch((err) => console.error("Gagal mengirim log:", err));
+      } else {
+        console.warn(
+          "⚠️ Channel Log tidak ditemukan! Cek TICKET_LOG_CHANNEL_ID di .env",
+        );
+      }
+    }
+
+    //delete Channel
+    await channel.delete();
+
+    if (ticketOwnerId) {
+      const ticketOwner = await guild.members
+        .fetch(ticketOwnerId)
+        .catch(() => null);
+      if (ticketOwner) {
+        const dmEmbed = new EmbedBuilder()
+          .setTitle("🎫 Tiket Ditutup")
+          .setColor("#E74C3C")
+          .setDescription(
+            `Tiketmu di server **${guild.name}** telah ditutup oleh <@${user.id}>.\nBerikut adalah lampiran riwayat percakapanmu.`,
+          );
+
+        await ticketOwner
+          .send({ embeds: [dmEmbed], files: [transcriptFile] })
+          .catch(() => {});
+      }
+    }
+  } catch (err) {
+    console.error("❌ Error Close Ticket:", err);
+    if (channel) {
+      await interaction.editReply(
+        "❌ Gagal menutup tiket. Pastikan bot memiliki hak akses `Manage Channels`.",
+      );
+    }
+  }
+}

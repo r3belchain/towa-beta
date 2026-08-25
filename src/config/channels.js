@@ -3,6 +3,7 @@ import "dotenv/config";
 export const CHANNELS = {
   WELCOME: process.env.WELCOME_CHANNEL_ID,
   VOTE: process.env.VOTE_CHANNEL_ID,
+  TICKETLOGS: process.env.TICKET_LOG_CHANNEL_ID,
 };
 
 // ID Bot Pihak Ketiga & Auth Webhook

@@ -117,16 +117,27 @@ export async function handleVoteMessage(client, message) {
 
     if (isSuccess) {
       const userId =
-        message.interaction?.user?.id ||
-        message.interactionMetadata?.user?.id ||
-        message.mentions.users.first()?.id;
+        message.interactionMetadata?.user?.id || 
+        message.interaction?.user?.id || 
+        message.mentions.users.filter((u) => !u.bot).first()?.id || 
+        message.mentions.repliedUser?.id || 
+        message.referencedMessage?.author?.id;
 
       if (userId) {
         await addVoterPoint(client, userId, platform);
+
+        if (typeof message.react === "function") {
+          await message.react("✅").catch(() => {});
+        }
       } else {
         console.warn(
           `⚠️ [${platform}] Bump sukses, tapi User ID gagal diekstrak!`,
         );
+        if (typeof message.reply === "function") {
+          await message.reply(
+            `🎉 **Bump ${platform} Berhasil!**\n\n*Tapi sepertinya API Discord menyembunyikan datamu.* 😔\nTim Mekanik TOWA akan cek secara berkala untuk tambah poin secara manual.`
+          ).catch(() => {});
+        }
       }
     }
   } catch (err) {

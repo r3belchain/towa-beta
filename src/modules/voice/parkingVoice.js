@@ -9,24 +9,26 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
 } from "discord.js";
-import { PEJABAT_ROLE_ID, IS_PRODUCTION } from "../../config/constants.js";
+import { MEKANIK_ROLE_ID, IS_PRODUCTION } from "../../config/constants.js";
 
 // 1. DEFINISI SLASH COMMAND
 export const parkirCommandData = new SlashCommandBuilder()
   .setName("parkir")
-  .setDescription("Memarkir bot 24/7 di Voice Channel (Khusus Staff)");
+  .setDescription("Memarkir bot 24/7 di Voice Channel (Khusus Mekanik/Admin)");
 
 export const unparkirCommandData = new SlashCommandBuilder()
   .setName("unparkir")
-  .setDescription("Mengeluarkan bot dari Voice Channel (Khusus Staff)");
+  .setDescription("Mengeluarkan bot dari Voice Channel (Khusus Mekanik/Admin)");
 
 // Helper pengecekan izin role
 export function hasParkirPermission(member) {
   if (!member) return false;
-  // Administrator selalu diizinkan
-  if (member.permissions?.has(PermissionFlagsBits.Administrator)) return true;
 
-  return member.roles.cache.has(PEJABAT_ROLE_ID);
+  const isOwner = member.id === member.guild.ownerId;
+  const isAdmin = member.permissions?.has(PermissionFlagsBits.Administrator);
+  const hasMekanikRole = member.roles.cache.has(MEKANIK_ROLE_ID);
+
+  return isOwner || isAdmin || hasMekanikRole;
 }
 
 // 2. HANDLER COMMAND /parkir

@@ -9,7 +9,7 @@ import {
 export async function handleWelcomeMember(member, client) {
   // WAJIB ADA: Supaya tidak bentrok dengan BotGhost yang masih aktif di Server Asli.
   // Jadi, ketika masih testing di TOWA, WAJIB menggunakan if (IS_PRODUCTION) return;*
-  if (IS_PRODUCTION) return;
+  // if (IS_PRODUCTION) return;
 
 
   if (member.guild.id !== GUILD_ID || member.user.bot) return;
@@ -27,7 +27,7 @@ export async function handleWelcomeMember(member, client) {
       if (channel) {
         const welcomeEmbed = new EmbedBuilder()
           .setTitle("🎉 Selamat Datang di TOWA!")
-          .setColor("#5865F2")
+          .setColor("#e09523")
           .setDescription(
             `Wih ada muka baru nih! Welcome to tongkrongan TOWA, <@${user.id}>. Coba dong spill dikit, lu mampir ke sini lagi nyari temen mabar, tempat asbun, atau nyari jodoh nih? wkwk 😽`,
           )
@@ -62,9 +62,7 @@ export async function handleWelcomeMember(member, client) {
           `• 🏷️ **Take Role**\n` +
           `<a:Animated_Arrow_Yellow:1520176423166279792> Pilih role kamu di channel <#1529119442712269030> biar identitasmu jelas dan makin seru nongkrongnya!`,
       )
-      .setImage(
-        "https://cdn.discordapp.com/attachments/1515794110554832896/1540135811192983562/towa-gif.gif?ex=6a89837f&is=6a8831ff&hm=1063e95523e3be445b071d9b1d3c422b49cd494fff9b958113fe21b530181acf&",
-      )
+      .setImage("https://imgur.com/a/t61FJEJ")
       .setFooter({ text: "Have fun ya!" });
 
     await member.send({ embeds: [dmEmbed] });

@@ -10,7 +10,7 @@ import {
 import "dotenv/config";
 import { DISCORD_ROLE_GROUPS, GUILD_ID } from "./config/constants.js";
 
-// EVENT LISTENERS 
+// EVENT LISTENERS
 import * as guildMemberAddEvent from "./events/guildMemberAdd.js";
 import * as guildMemberRemoveEvent from "./events/guildMemberRemove.js";
 import * as guildMemberUpdateEvent from "./events/guildMemberUpdate.js";
@@ -41,6 +41,8 @@ import { verifyKebalCommandData } from "./modules/roles/verifyKebal.js";
 import { verifyGirlCommandData } from "./modules/roles/verifyGirl.js";
 import { syncVoiceActivity } from "./modules/voice/voiceTracker.js";
 import { startTopGGWebhook } from "./modules/vote/voteTracker.js";
+import { ticketCommandData } from "./modules/tickets/ticket.js";
+import { ticketCategoryCommandData } from "./modules/tickets/ticketCategory.js";
 import { cacheUserInfo } from "./utils/userCache.js";
 
 // SETUP DISCORD CLIENT
@@ -115,7 +117,7 @@ async function initialSync() {
   }
 }
 
-// CLIENT READY EVENT 
+// CLIENT READY EVENT
 client.once(Events.ClientReady, async () => {
   console.log(`✅ Bot online sebagai ${client.user.tag}`);
 
@@ -134,10 +136,12 @@ client.once(Events.ClientReady, async () => {
         unparkirCommandData.toJSON(),
         verifyKebalCommandData.toJSON(),
         verifyGirlCommandData.toJSON(),
+        ticketCommandData.toJSON(),
+        ticketCategoryCommandData.toJSON(),
       ],
     });
     console.log(
-      "✅ Guild Commands (/leaderboard, /parkir, /unparkir, /verify-kebal /verify-girl) berhasil terdaftar di Server TOWA!",
+      "✅ Guild Commands (Leaderboard, Parkir, Verify, Ticket System) berhasil terdaftar di Server TOWA!",
     );
   } catch (err) {
     console.error("❌ Gagal mendaftarkan Slash Command:", err.message);
@@ -146,7 +150,7 @@ client.once(Events.ClientReady, async () => {
   startMonthlyResetCron(client);
 });
 
-// EVENT LISTENERS MODULAR 
+// EVENT LISTENERS MODULAR
 client.on(guildMemberUpdateEvent.name, (oldMem, newMem) =>
   guildMemberUpdateEvent.execute(oldMem, newMem),
 );
