@@ -1,8 +1,11 @@
-import { createCanvas, loadImage } from "@napi-rs/canvas";
+import { createCanvas, GlobalFonts, loadImage } from "@napi-rs/canvas";
 import { AttachmentBuilder, EmbedBuilder } from "discord.js";
 import { join } from "path";
 
 import { CHANNELS, GUILD_ID } from "../../config/constants.js";
+
+const fontPath = join(process.cwd(), "assets", "font-towa.ttf");
+GlobalFonts.registerFromPath(fontPath, "TowaFont");
 
 export async function handleWelcomeMember(member, client) {
   // WAJIB ADA: Supaya tidak bentrok dengan BotGhost yang masih aktif di Server Asli.
@@ -52,19 +55,20 @@ export async function handleWelcomeMember(member, client) {
         ctx.lineWidth = 6;
         ctx.stroke();
 
-        ctx.font = "bold 45px sans-serif";
+        // 3. UBAH SEMUA 'sans-serif' MENJADI 'TowaFont'
+        ctx.font = "45px TowaFont";
         ctx.fillStyle = "#ffffff";
         ctx.textAlign = "center";
         ctx.fillText("WELCOME", 400, 290);
 
-        ctx.font = "bold 30px sans-serif";
+        ctx.font = "bold 30px TowaFont";
         ctx.fillStyle = "#e09523";
         let displayName = user.username.toUpperCase();
         if (displayName.length > 20)
           displayName = displayName.substring(0, 20) + "...";
         ctx.fillText(displayName, 400, 335);
 
-        ctx.font = "20px sans-serif";
+        ctx.font = "20px TowaFont";
         ctx.fillStyle = "#ffffff";
         ctx.fillText("Semoga Betah di TOWA, ya!", 400, 370);
 
