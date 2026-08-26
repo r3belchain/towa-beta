@@ -1,23 +1,20 @@
-import { EmbedBuilder } from "discord.js";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
+import { AttachmentBuilder, EmbedBuilder } from "discord.js";
+import { join } from "path";
 
-import {
-  GUILD_ID,
-  CHANNELS,
-  IS_PRODUCTION,
-} from "../../config/constants.js";
+import { CHANNELS, GUILD_ID } from "../../config/constants.js";
 
 export async function handleWelcomeMember(member, client) {
   // WAJIB ADA: Supaya tidak bentrok dengan BotGhost yang masih aktif di Server Asli.
   // Jadi, ketika masih testing di TOWA, WAJIB menggunakan if (IS_PRODUCTION) return;*
   // if (IS_PRODUCTION) return;
 
-
   if (member.guild.id !== GUILD_ID || member.user.bot) return;
 
   const user = member.user;
   const guild = member.guild;
 
-  // --- A. KIRIM PESAN KE CHANNEL SERVER ---
+  // KIRIM PESAN KE OBROLAN RANDOM
   if (CHANNELS.WELCOME) {
     try {
       const channel = await client.channels
@@ -25,13 +22,64 @@ export async function handleWelcomeMember(member, client) {
         .catch(() => null);
 
       if (channel) {
+        const canvas = createCanvas(800, 400);
+        const ctx = canvas.getContext("2d");
+
+        const backgroundPath = join(process.cwd(), "assets", "bg-welcome.png");
+        const background = await loadImage(backgroundPath);
+        ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const avatarURL = user.displayAvatarURL({
+          extension: "png",
+          size: 256,
+        });
+        const avatar = await loadImage(avatarURL);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(400, 150, 85, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(avatar, 400 - 85, 150 - 85, 170, 170);
+        ctx.restore();
+
+        ctx.beginPath();
+        ctx.arc(400, 150, 85, 0, Math.PI * 2, true);
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 6;
+        ctx.stroke();
+
+        ctx.font = "bold 45px sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.fillText("WELCOME", 400, 290);
+
+        ctx.font = "bold 30px sans-serif";
+        ctx.fillStyle = "#e09523";
+        let displayName = user.username.toUpperCase();
+        if (displayName.length > 20)
+          displayName = displayName.substring(0, 20) + "...";
+        ctx.fillText(displayName, 400, 335);
+
+        ctx.font = "20px sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText("Semoga Betah di TOWA, ya!", 400, 370);
+
+        const attachment = new AttachmentBuilder(await canvas.encode("png"), {
+          name: "welcome-image.png",
+        });
+
         const welcomeEmbed = new EmbedBuilder()
-          .setTitle("🎉 Selamat Datang di TOWA!")
+          .setTitle("🤩 Selamat Datang di TOWA!")
           .setColor("#e09523")
           .setDescription(
-            `Wih ada muka baru nih! Welcome to tongkrongan TOWA, <@${user.id}>. Coba dong spill dikit, lu mampir ke sini lagi nyari temen mabar, tempat asbun, atau nyari jodoh nih? wkwk 😽`,
+            `Ada muka baru nih! Welcome to tongkrongan TOWA, <@${user.id}>. Coba dong spill dikit, lu mampir ke sini lagi nyari temen mabar, tempat asbun, atau nyari jodoh nih? wkwk 😽`,
           )
-          .setThumbnail(user.displayAvatarURL({ dynamic: true }))
+
+          .setImage("attachment://welcome-image.png")
           .setFooter({
             text: `Warga ke-${guild.memberCount} • Jangan lupa baca rules & ambil role ya!`,
           })
@@ -40,6 +88,7 @@ export async function handleWelcomeMember(member, client) {
         await channel.send({
           content: `👋 Halo <@${user.id}>!`,
           embeds: [welcomeEmbed],
+          files: [attachment],
         });
       }
     } catch (err) {
@@ -47,7 +96,7 @@ export async function handleWelcomeMember(member, client) {
     }
   }
 
-  // --- B. KIRIM PESAN KE DM MEMBER ---
+  // KIRIM PESAN KE DM MEMBER
   try {
     const dmEmbed = new EmbedBuilder()
       .setTitle(`Selamat datang di ${guild.name}`)
@@ -62,7 +111,9 @@ export async function handleWelcomeMember(member, client) {
           `• 🏷️ **Take Role**\n` +
           `<a:Animated_Arrow_Yellow:1520176423166279792> Pilih role kamu di channel <#1529119442712269030> biar identitasmu jelas dan makin seru nongkrongnya!`,
       )
-      .setImage("https://imgur.com/a/t61FJEJ")
+      .setImage(
+        "https://cdn.discordapp.com/attachments/1515794110554832896/1540135811192983562/towa-gif.gif?ex=6a8f723f&is=6a8e20bf&hm=5d3ca0e5f0f3ebb1640c34e8439e9e8622553af05091291fe19d8929efa75dd1&",
+      )
       .setFooter({ text: "Have fun ya!" });
 
     await member.send({ embeds: [dmEmbed] });
