@@ -88,22 +88,39 @@ async function addVoterPoint(client, userId, source) {
 
 export async function handleVoteMessage(client, message) {
   if (message.channelId !== CHANNELS.VOTE) return;
+  // TES CONSOLE
+  console.log(
+    `[DEBUG VOTE] Pesan terdeteksi di channel VOTE dari: ${message.author.username} (ID: ${message.author.id})`,
+  );
 
   const isDisboard = message.author.id === EXTERNAL_BOTS.DISBOARD;
   const isDiscadia = message.author.id === EXTERNAL_BOTS.DISCADIA;
 
-  if (!isDisboard && !isDiscadia) return;
+  if (!isDisboard && !isDiscadia) {
+    // TES CONSOLE
+    console.log(
+      `[DEBUG VOTE] Diabaikan. ID ${message.author.id} tidak cocok dengan Disboard (${EXTERNAL_BOTS.DISBOARD}) atau Discadia (${EXTERNAL_BOTS.DISCADIA})`,
+    );
+
+    return;
+  }
 
   try {
     let platform = isDisboard ? "Disboard" : "Discadia";
-
+    // Tes console
+    console.log(`[DEBUG VOTE] Memproses pesan dari platform: ${platform}`);
     const contentStr = message.content.toLowerCase();
     const embedsStr = message.embeds
-      .map((e) => `${e.title || ""} ${e.description || ""}`)
+      .map(
+        (e) =>
+          `${e.title || ""} ${e.description || ""} ${e.fields?.map((f) => f.value).join(" ") || ""}`,
+      )
       .join(" ")
       .toLowerCase();
 
     const fullText = `${contentStr} ${embedsStr}`;
+    // Tes console
+    console.log(`[DEBUG VOTE] Teks yang berhasil dibaca bot:`, fullText);
 
     let isSuccess = false;
 
@@ -114,16 +131,18 @@ export async function handleVoteMessage(client, message) {
         fullText.includes("successfully bumped") &&
         !fullText.includes("already bumped recently");
     }
-
+    // TEs Console
+    console.log(`[DEBUG VOTE] Status isSuccess: ${isSuccess}`);
     if (isSuccess) {
       const userId =
-        message.interactionMetadata?.user?.id || 
-        message.interaction?.user?.id || 
-        message.mentions.users.filter((u) => !u.bot).first()?.id || 
-        message.mentions.repliedUser?.id || 
+        message.interactionMetadata?.user?.id ||
+        message.interaction?.user?.id ||
+        message.mentions.users.filter((u) => !u.bot).first()?.id ||
+        message.mentions.repliedUser?.id ||
         message.referencedMessage?.author?.id;
 
       if (userId) {
+        console.log(`[DEBUG VOTE] Menambahkan poin ke User ID: ${userId}`);
         await addVoterPoint(client, userId, platform);
 
         if (typeof message.react === "function") {
@@ -134,9 +153,11 @@ export async function handleVoteMessage(client, message) {
           `⚠️ [${platform}] Bump sukses, tapi User ID gagal diekstrak!`,
         );
         if (typeof message.reply === "function") {
-          await message.reply(
-            `🎉 **Bump ${platform} Berhasil!**\n\n*Tapi sepertinya API Discord menyembunyikan datamu.* 😔\nTim Mekanik TOWA akan cek secara berkala untuk tambah poin secara manual.`
-          ).catch(() => {});
+          await message
+            .reply(
+              `🎉 **Bump ${platform} Berhasil!**\n\n*Tapi sepertinya API Discord menyembunyikan datamu.* 😔\nTim Mekanik TOWA akan cek secara berkala untuk tambah poin secara manual.`,
+            )
+            .catch(() => {});
         }
       }
     }
