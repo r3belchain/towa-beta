@@ -27,6 +27,15 @@ export const ticketCommandData = new SlashCommandBuilder()
           .setDescription("Channel tempat panel tiket ditaruh")
           .addChannelTypes(ChannelType.GuildText)
           .setRequired(true),
+      )
+    
+      .addStringOption((opt) =>
+        opt
+          .setName("category")
+          .setDescription(
+            "Kategori tiket spesifik (Opsional, misal: Donasi, Laporan)",
+          )
+          .setRequired(false),
       ),
   )
   .addSubcommand((sub) =>
@@ -44,6 +53,8 @@ export async function handleTicketCommand(interaction) {
   // SUBCOMMAND: /ticket setup
   if (subcommand === "setup") {
     const targetChannel = interaction.options.getChannel("channel");
+  
+    const targetCategory = interaction.options.getString("category") || "";
 
     // formulir modal admin
     const modal = new ModalBuilder()
@@ -62,6 +73,7 @@ export async function handleTicketCommand(interaction) {
       .setLabel("Deskripsi Embed (Opsional)")
       .setPlaceholder("Klik tombol di bawah untuk menghubungi Staff TOWA.")
       .setStyle(TextInputStyle.Paragraph)
+      .setMaxLength(4000) 
       .setRequired(false);
 
     modal.addComponents(
@@ -93,11 +105,18 @@ export async function handleTicketCommand(interaction) {
         .setDescription(inputDesc)
         .setFooter({ text: "Sistem Tiket Resmi TOWA" });
 
+   
+      const buttonCustomId = targetCategory
+        ? `TICKET_CREATE|${targetCategory}`
+        : "TICKET_CREATE";
+
       // Buat Tombol Buka Tiket
       const ticketBtn = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId("TICKET_CREATE")
-          .setLabel("Buka Tiket")
+          .setCustomId(buttonCustomId) 
+          .setLabel(
+            targetCategory ? `Buka Tiket ${targetCategory}` : "Buka Tiket",
+          )
           .setEmoji("📩")
           .setStyle(ButtonStyle.Primary),
       );
@@ -108,7 +127,7 @@ export async function handleTicketCommand(interaction) {
       });
 
       await modalSubmit.reply({
-        content: `✅ Panel tiket berhasil dikirim ke <#${targetChannel.id}>!`,
+        content: `✅ Panel tiket ${targetCategory ? `kategori **${targetCategory}**` : "umum"} berhasil dikirim ke <#${targetChannel.id}>!`,
         flags: MessageFlags.Ephemeral,
       });
     } catch (err) {
@@ -119,7 +138,7 @@ export async function handleTicketCommand(interaction) {
   // SUBCOMMAND: /ticket close
   else if (subcommand === "close") {
     await interaction.reply({
-      content: "Fitur close sedang dibangun...",
+      content: "Gunakan tombol 🔒 di dalam channel tiket untuk menutup tiket.",
       flags: MessageFlags.Ephemeral,
     });
   }

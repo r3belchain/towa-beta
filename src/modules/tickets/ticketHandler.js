@@ -10,15 +10,16 @@ import {
   StringSelectMenuBuilder,
 } from "discord.js";
 
-import {
-  CHANNELS,
-} from "../../config/constants.js";
+import { CHANNELS } from "../../config/constants.js";
 import { supabase } from "../../config/supabase.js";
 
 // HANDLER TICKET_CREATE
 export async function handleTicketOpen(interaction) {
   await interaction.deferReply({ ephemeral: true });
-  const { guild, user } = interaction;
+
+  const { guild, user, customId } = interaction;
+
+  const boundCategory = customId.includes("|") ? customId.split("|")[1] : null;
 
   try {
     const existingChannel = guild.channels.cache.find(
@@ -35,10 +36,11 @@ export async function handleTicketOpen(interaction) {
       .select("*");
     if (error) throw error;
 
-    let selectedCategoryName = "Default";
+    let selectedCategoryName = boundCategory || "Default";
     let staffRoleIds = [];
+    let customWelcomeMessage = null;
 
-    if (categories && categories.length > 0) {
+    if (!boundCategory && categories && categories.length > 0) {
       const options = categories.map((cat) => ({
         label: cat.name,
         value: cat.name,
@@ -74,16 +76,24 @@ export async function handleTicketOpen(interaction) {
       }
 
       await menuInteraction.deferUpdate();
-
       selectedCategoryName = menuInteraction.values[0];
+    }
+
+    if (categories && categories.length > 0) {
       const selectedCategoryData = categories.find(
-        (cat) => cat.name === selectedCategoryName,
+        (cat) => cat.name.toLowerCase() === selectedCategoryName.toLowerCase(),
       );
 
-      if (selectedCategoryData && selectedCategoryData.staff_roles) {
-        staffRoleIds = selectedCategoryData.staff_roles
-          .split(",")
-          .map((r) => r.trim());
+      if (selectedCategoryData) {
+        if (selectedCategoryData.staff_roles) {
+          staffRoleIds = selectedCategoryData.staff_roles
+            .split(",")
+            .map((r) => r.trim());
+        }
+        // ADATA PESAN SAMBUTAN SUPABASE
+        if (selectedCategoryData.welcome_message) {
+          customWelcomeMessage = selectedCategoryData.welcome_message;
+        }
       }
     }
 
@@ -92,8 +102,8 @@ export async function handleTicketOpen(interaction) {
       components: [],
     });
 
-   const ticketNumber = Math.floor(1000 + Math.random() * 9000);
-   const channelName = `ticket-${ticketNumber}`;
+    const ticketNumber = Math.floor(1000 + Math.random() * 9000);
+    const channelName = `ticket-${ticketNumber}`;
 
     const permissionOverwrites = [
       {
@@ -136,22 +146,32 @@ export async function handleTicketOpen(interaction) {
     }
 
     // Private Channel
-   const ticketChannel = await guild.channels.create({
-     name: channelName, 
-     type: ChannelType.GuildText,
-     topic: `ticket|${user.id}|${selectedCategoryName}`,
-     permissionOverwrites,
-   });
+    const ticketChannel = await guild.channels.create({
+      name: channelName,
+      type: ChannelType.GuildText,
+      topic: `ticket|${user.id}|${selectedCategoryName}`,
+      permissionOverwrites,
+    });
+
+
+    //  PESAN DINAMIS DATABASE
+    let ticketDescription =
+      `Halo <@${user.id}>!\n\n` +
+      `Terima kasih telah menghubungi kami. Tim Staff akan segera merespons tiketmu.\n` +
+      `Silakan jelaskan keperluanmu secara detail di bawah ini.`;
+
+    if (customWelcomeMessage) {
+      ticketDescription = customWelcomeMessage.replace(
+        /{user}/g,
+        `<@${user.id}>`,
+      );
+    }
 
     // Sambutan di dalam Channel Tiket
     const embed = new EmbedBuilder()
       .setTitle(`🎫 Tiket #${ticketNumber} - ${selectedCategoryName}`)
       .setColor("#2ECC71")
-      .setDescription(
-        `Halo <@${user.id}>!\n\n` +
-          `Terima kasih telah menghubungi kami. Tim Staff akan segera merespons tiketmu.\n` +
-          `Silakan jelaskan keperluanmu secara detail di bawah ini.`,
-      )
+      .setDescription(ticketDescription)
       .setFooter({
         text: "Sistem Tiket TOWA • Klik tombol 🔒 untuk menutup tiket",
       });
@@ -228,7 +248,7 @@ export async function handleTicketClose(interaction) {
     const categoryName = topicSplit[2] || "Lainnya";
 
     // CHANNEL TICKET LOGS
-    const logChannelId = CHANNELS.TICKETLOGS
+    const logChannelId = CHANNELS.TICKETLOGS;
     if (logChannelId) {
       const logChannel = guild.channels.cache.get(logChannelId);
       if (logChannel) {
@@ -254,12 +274,12 @@ export async function handleTicketClose(interaction) {
           .catch((err) => console.error("Gagal mengirim log:", err));
       } else {
         console.warn(
-          "⚠️ Channel Log tidak ditemukan! Cek TICKET_LOG_CHANNEL_ID di .env",
+          "⚠️ Channel Log tidak ditemukan! Cek TICKETLOGS di constants.js",
         );
       }
     }
 
-    //delete Channel
+    // delete Channel
     await channel.delete();
 
     if (ticketOwnerId) {
