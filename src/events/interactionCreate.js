@@ -37,7 +37,7 @@ export async function execute(interaction) {
       await handleTicketCategoryCommand(interaction);
     }
   } else if (interaction.isButton()) {
-    if (interaction.customId === "TICKET_CREATE") {
+    if (interaction.customId.startsWith("TICKET_CREATE")) {
       await handleTicketOpen(interaction);
     } else if (interaction.customId === "TICKET_CLOSE") {
       await handleTicketClose(interaction);
