@@ -194,6 +194,41 @@ export async function handleTicketOpen(interaction) {
         )
         .setThumbnail(guild.iconURL({ dynamic: true, size: 256 }))
         .setFooter({ text: "Sistem Tiket Resmi TOWA" });
+    } else if (catName === "donasi") {
+      embed = new EmbedBuilder()
+        .setTitle(`💖 Klaim VIP & Donatur - ${user.username}`)
+        .setColor("#f39b0e")
+        .setDescription(
+          `Halo <@${user.id}>! Makasih banyak udah jajanin dan *support* TOWA. ☕💖\n\n` +
+            `Silakan lengkapi data di bawah ini agar tim admin bisa langsung memproses **Role** dan **Benefit VIP** milikmu.`,
+        )
+        .addFields(
+          {
+            name: "📸 1. Bukti Pembayaran",
+            value:
+              "Kirimkan **Screenshot Trakteer** (https://teer.id/towa_server) kamu di sini. Pastiin nominal/jumlah es krimnya kelihatan ya!\n\n" +
+              "👉 *Kalau mau donasi pakai **OwO Cash**, silakan sebutkan nominalnya dan tunggu instruksi transfer (wgive) dari admin.*",
+          },
+          {
+            name: "📦 2. Kirim File Benefit",
+            value:
+              "Punya jatah **Custom Emoji/Sticker** (Tier 2 ke atas) dan ekstra **Soundboard** (khusus Tier 4)?\n\n" +
+              "**langsung aja kirim file gambar/MP3-nya ke chat ini**!",
+          },
+          {
+            name: "🎨 3. Info Custom Role (Khusus Tier 3 & 4)",
+            value:
+              "Pembuatan **Custom Role (Solid/Gradient)** TIDAK dilakukan di tiket ini.\n\n" +
+              "Setelah admin memverifikasi dan ngasih role *Warga Sultan* atau *Juragan TOWA* ke akunmu, silakan langsung meluncur ke channel **🎨・custom-roles** untuk bikin dan ngatur warna role-mu sendiri!",
+          },
+          {
+            name: "⏳ Tahap Verifikasi",
+            value:
+              "Mohon bersabar menunggu tim <@&1515475636242612297> merespons tiket ini dan nyettingin *request* kalian. Tiket akan ditutup otomatis jika semua klaim sudah beres.",
+          },
+        )
+        .setThumbnail(guild.iconURL({ dynamic: true, size: 256 }))
+        .setFooter({ text: "Sistem Tiket TOWA • VIP Lounge" });
     } else {
       let ticketDescription =
         `Halo <@${user.id}>!\n\n` +
