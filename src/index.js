@@ -20,14 +20,9 @@ import * as voiceStateUpdateEvent from "./events/voiceStateUpdate.js";
 
 // COMMAND DATA & BACKGROUND SERVICES
 
-import {
-  leaderboardCommandData,
-  startMonthlyResetCron,
-} from "./modules/vote/leaderboard.js"
-import {
-  parkirCommandData,
-  unparkirCommandData,
-} from "./modules/voice/parkingVoice.js";
+import { data as subCommandData } from "./commands/staff/sub.js";
+import { verifyGirlCommandData } from "./modules/roles/verifyGirl.js";
+import { verifyKebalCommandData } from "./modules/roles/verifyKebal.js";
 import {
   initialSyncRecentMembers,
   syncBoosters,
@@ -37,15 +32,20 @@ import {
   startStatsCron,
   updateServerStats,
 } from "./modules/stats/statsTracker.js";
-import { verifyKebalCommandData } from "./modules/roles/verifyKebal.js";
-import { verifyGirlCommandData } from "./modules/roles/verifyGirl.js";
-import { syncVoiceActivity } from "./modules/voice/voiceTracker.js";
-import { startTopGGWebhook } from "./modules/vote/voteTracker.js";
+import { initSubscriptionCron } from "./modules/subscriptions/subscriptionCron.js";
 import { ticketCommandData } from "./modules/tickets/ticket.js";
 import { ticketCategoryCommandData } from "./modules/tickets/ticketCategory.js";
+import {
+  parkirCommandData,
+  unparkirCommandData,
+} from "./modules/voice/parkingVoice.js";
+import { syncVoiceActivity } from "./modules/voice/voiceTracker.js";
+import {
+  leaderboardCommandData,
+  startMonthlyResetCron,
+} from "./modules/vote/leaderboard.js";
+import { startTopGGWebhook } from "./modules/vote/voteTracker.js";
 import { cacheUserInfo } from "./utils/userCache.js";
-import { data as subCommandData } from "./modules/commands/staff/sub.js";
-import { initSubscriptionCron } from "./modules/subscriptions/subscriptionCron.js";
 
 // SETUP DISCORD CLIENT
 const client = new Client({
