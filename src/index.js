@@ -44,6 +44,8 @@ import { startTopGGWebhook } from "./modules/vote/voteTracker.js";
 import { ticketCommandData } from "./modules/tickets/ticket.js";
 import { ticketCategoryCommandData } from "./modules/tickets/ticketCategory.js";
 import { cacheUserInfo } from "./utils/userCache.js";
+import { data as subCommandData } from "./modules/commands/staff/sub.js";
+import { initSubscriptionCron } from "./modules/subscriptions/subscriptionCron.js";
 
 // SETUP DISCORD CLIENT
 const client = new Client({
@@ -123,6 +125,7 @@ client.once(Events.ClientReady, async () => {
 
   await initialSync();
   startStatsCron(client);
+  initSubscriptionCron(client);
   startTopGGWebhook(client);
 
   try {
@@ -138,6 +141,7 @@ client.once(Events.ClientReady, async () => {
         verifyGirlCommandData.toJSON(),
         ticketCommandData.toJSON(),
         ticketCategoryCommandData.toJSON(),
+        subCommandData.toJSON(),
       ],
     });
     console.log(

@@ -15,6 +15,8 @@ import {
   handleTicketOpen,
 } from "../modules/tickets/ticketHandler.js";
 
+import { execute as handleSubCommand } from "../commands/staff/sub.js";
+
 export const name = Events.InteractionCreate;
 
 export async function execute(interaction) {
@@ -35,6 +37,8 @@ export async function execute(interaction) {
       await handleTicketCommand(interaction);
     } else if (interaction.commandName === "ticket-category") {
       await handleTicketCategoryCommand(interaction);
+    } else if (interaction.commandName === "sub") {
+      await handleSubCommand(interaction);
     }
   } else if (interaction.isButton()) {
     if (interaction.customId.startsWith("TICKET_CREATE")) {
