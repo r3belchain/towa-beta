@@ -194,7 +194,7 @@ export async function handleTicketOpen(interaction) {
         )
         .setThumbnail(guild.iconURL({ dynamic: true, size: 256 }))
         .setFooter({ text: "Sistem Tiket Resmi TOWA" });
-    } else if (catName === "donasi") {
+    } else if (selectedCategoryName.toLowerCase() === "donasi") {
       embed = new EmbedBuilder()
         .setTitle(`💖 Klaim VIP & Donatur - ${user.username}`)
         .setColor("#f39b0e")
