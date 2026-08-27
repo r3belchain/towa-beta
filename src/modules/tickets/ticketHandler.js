@@ -146,16 +146,26 @@ export async function handleTicketOpen(interaction) {
       });
     }
 
+    let targetParentId = null;
+    const catCheck = selectedCategoryName.toLowerCase();
+    
+    if (catCheck === "donasi") {
+      targetParentId = "1526891956678950993"; 
+    } else if (catCheck === "bikin-rt" || catCheck === "laporan-warga") {
+      targetParentId = "1515378438746144889"; 
+    }
+
     // Private Channel
     const ticketChannel = await guild.channels.create({
       name: channelName,
       type: ChannelType.GuildText,
+      parent: targetParentId, 
       topic: `ticket|${user.id}|${selectedCategoryName}`,
       permissionOverwrites,
     });
 
-    // CUSTOM EMBED INJECTION
 
+    // CUSTOM EMBED INJECTION
     let embed;
 
     if (selectedCategoryName.toLowerCase() === "bikin-rt") {
