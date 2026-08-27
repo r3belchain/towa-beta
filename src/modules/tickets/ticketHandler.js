@@ -154,27 +154,68 @@ export async function handleTicketOpen(interaction) {
     });
 
 
-    //  PESAN DINAMIS DATABASE
-    let ticketDescription =
-      `Halo <@${user.id}>!\n\n` +
-      `Terima kasih telah menghubungi kami. Tim Staff akan segera merespons tiketmu.\n` +
-      `Silakan jelaskan keperluanmu secara detail di bawah ini.`;
+    // CUSTOM EMBED INJECTION 
 
-    if (customWelcomeMessage) {
-      ticketDescription = customWelcomeMessage.replace(
-        /{user}/g,
-        `<@${user.id}>`,
-      );
+    let embed;
+
+    if (selectedCategoryName.toLowerCase() === "bikin-rt") {
+      embed = new EmbedBuilder()
+        .setTitle(`📝 Loket Pendaftaran RT TOWA - ${user.username}`)
+        .setColor("#FFD700") 
+        .setDescription(
+          `Halo <@${user.id}>, selamat datang di loket Pendaftaran RT TOWA!\n\n` +
+            `Silakan **copy-paste** dan isi formulir di bawah ini, lalu kirim kembali ke channel tiket ini:`,
+        )
+        .addFields(
+          {
+            name: "📋 Format Pendaftaran",
+            value:
+              "```text\n" +
+              "Nama RT:\n" +
+              "Filosofi/Alasan Nama RT:\n" +
+              "Ketua RT:\n" +
+              "List member (username) (minimal 4):\n" +
+              "Warna role:\n" +
+              "Gambar role:\n" +
+              "```",
+          },
+          {
+            name: "💰 Informasi Pembayaran",
+            value:
+              "Total biaya pembuatan RT adalah **250.000 OwO Cash** (200k pendaftaran + 50k pajak).\n\n" +
+              "👉 Silakan lakukan transfer (`wgive`) ke Admin/Staf yang merespons tiket ini.",
+          },
+          {
+            name: "✅ Langkah Selanjutnya",
+            value:
+              "Kalau form sudah diisi dan pembayaran lunas, channel *Voice & Text* khusus RT kalian akan langsung kami proses!\n\n" +
+              "*Catatan: Gunakan tombol 🔒 di bawah pesan ini jika ingin menutup tiket.*",
+          },
+        )
+        .setThumbnail(guild.iconURL({ dynamic: true, size: 256 }))
+        .setFooter({ text: "Sistem Tiket Resmi TOWA" });
+    } else {
+      
+      let ticketDescription =
+        `Halo <@${user.id}>!\n\n` +
+        `Terima kasih telah menghubungi kami. Tim Staff akan segera merespons tiketmu.\n` +
+        `Silakan jelaskan keperluanmu secara detail di bawah ini.`;
+
+      if (customWelcomeMessage) {
+        ticketDescription = customWelcomeMessage.replace(
+          /{user}/g,
+          `<@${user.id}>`,
+        );
+      }
+
+      embed = new EmbedBuilder()
+        .setTitle(`🎫 Tiket #${ticketNumber} - ${selectedCategoryName}`)
+        .setColor("#2ECC71")
+        .setDescription(ticketDescription)
+        .setFooter({
+          text: "Sistem Tiket TOWA • Klik tombol 🔒 untuk menutup tiket",
+        });
     }
-
-    // Sambutan di dalam Channel Tiket
-    const embed = new EmbedBuilder()
-      .setTitle(`🎫 Tiket #${ticketNumber} - ${selectedCategoryName}`)
-      .setColor("#2ECC71")
-      .setDescription(ticketDescription)
-      .setFooter({
-        text: "Sistem Tiket TOWA • Klik tombol 🔒 untuk menutup tiket",
-      });
 
     const closeBtnRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
@@ -184,7 +225,7 @@ export async function handleTicketOpen(interaction) {
         .setStyle(ButtonStyle.Danger),
     );
 
-    // Ping user dan ping staff
+    // Ping user  ping staff
     const staffPing = staffRoleIds.map((id) => `<@&${id}>`).join(" ");
     await ticketChannel.send({
       content: `<@${user.id}> ${staffPing}`,
