@@ -90,11 +90,11 @@ export function startMonthlyResetCron(client) {
         if (channel && embedFinal) {
           await channel.send({
             content:
-              "🎉 **[PENGUMUMAN PEMENANG VOTE BULAN INI]** 🎉\nSelamat kepada para pemenang leaderboard! Tim Mekanik TOWA akan segera membagikan role reward secara manual.\n\n*Poin leaderboard resmi di-reset ke 0 untuk periode bulan baru.*",
+              "🔥 **[REKAP LEADERBOARD VOTE - FASE WARMING UP]** 🔥\n\nTerima kasih untuk warga yang sudah berpartisipasi di periode *Warming Up* bulan ini! Berhubung masih dalam tahap uji coba & pemanasan, **belum ada role reward yang dibagikan** untuk periode kali ini.\n\n*Poin leaderboard resmi telah di-reset ke 0 untuk menyambut bulan baru.*",
             embeds: [embedFinal],
           });
           console.log(
-            "📢 [CRON] Pengumuman pemenang berhasil dikirim ke channel.",
+            "📢 [CRON] Rekap leaderboard (Fase Warming Up) berhasil dikirim ke channel.",
           );
         }
       } catch (discordErr) {
