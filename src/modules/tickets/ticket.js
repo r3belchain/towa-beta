@@ -28,7 +28,7 @@ export const ticketCommandData = new SlashCommandBuilder()
           .addChannelTypes(ChannelType.GuildText)
           .setRequired(true),
       )
-    
+
       .addStringOption((opt) =>
         opt
           .setName("category")
@@ -53,7 +53,7 @@ export async function handleTicketCommand(interaction) {
   // SUBCOMMAND: /ticket setup
   if (subcommand === "setup") {
     const targetChannel = interaction.options.getChannel("channel");
-  
+
     const targetCategory = interaction.options.getString("category") || "";
 
     // formulir modal admin
@@ -73,7 +73,7 @@ export async function handleTicketCommand(interaction) {
       .setLabel("Deskripsi Embed (Opsional)")
       .setPlaceholder("Klik tombol di bawah untuk menghubungi Staff TOWA.")
       .setStyle(TextInputStyle.Paragraph)
-      .setMaxLength(4000) 
+      .setMaxLength(4000)
       .setRequired(false);
 
     modal.addComponents(
@@ -105,18 +105,29 @@ export async function handleTicketCommand(interaction) {
         .setDescription(inputDesc)
         .setFooter({ text: "Sistem Tiket Resmi TOWA" });
 
-   
       const buttonCustomId = targetCategory
         ? `TICKET_CREATE|${targetCategory}`
         : "TICKET_CREATE";
 
-      // Buat Tombol Buka Tiket
+      let buttonLabel = "Buka Tiket";
+      if (targetCategory) {
+        const cat = targetCategory.toLowerCase();
+        if (cat === "bikin-rt") {
+          buttonLabel = "Daftar RT";
+        } else if (cat === "donasi") {
+          buttonLabel = "Kirim Donasi";
+        } else if (cat === "laporan") {
+          buttonLabel = "Buat Laporan";
+        } else {
+          buttonLabel = `Buka Tiket ${targetCategory}`;
+        }
+      }
+
+      // Tombol Buka Tiket
       const ticketBtn = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId(buttonCustomId) 
-          .setLabel(
-            targetCategory ? `Buka Tiket ${targetCategory}` : "Buka Tiket",
-          )
+          .setCustomId(buttonCustomId)
+          .setLabel(buttonLabel) 
           .setEmoji("📩")
           .setStyle(ButtonStyle.Primary),
       );
