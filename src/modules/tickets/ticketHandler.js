@@ -212,14 +212,14 @@ export async function handleTicketOpen(interaction) {
           {
             name: "📦 2. Kirim File Benefit",
             value:
-              "Punya jatah **Custom Emoji/Sticker** (Tier 2 ke atas) dan ekstra **Soundboard** (khusus Tier 4)?\n\n" +
+              "Punya jatah **Custom Emoji/Sticker** (Tier 2 ke atas) dan ekstra **Soundboard** (khusus Tier 4)?\n" +
               "**langsung aja kirim file gambar/MP3-nya ke chat ini**!",
           },
           {
             name: "🎨 3. Info Custom Role (Khusus Tier 3 & 4)",
             value:
               "Pembuatan **Custom Role (Solid/Gradient)** TIDAK dilakukan di tiket ini.\n\n" +
-              "Setelah admin memverifikasi dan ngasih role *Warga Sultan* atau *Juragan TOWA* ke akunmu, silakan langsung meluncur ke channel **🎨・custom-roles** untuk bikin dan ngatur warna role-mu sendiri!",
+              "Setelah admin memverifikasi dan ngasih role <@&1526878454979760128> atau <@&1526878458763018410> ke akunmu, silakan langsung meluncur ke channel <#1515497786697584660> untuk bikin dan ngatur warna role-mu sendiri!",
           },
           {
             name: "⏳ Tahap Verifikasi",
