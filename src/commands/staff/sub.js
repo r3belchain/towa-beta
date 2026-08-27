@@ -42,7 +42,7 @@ export const data = new SlashCommandBuilder()
           .setRequired(true)
           .addChoices(
             {
-              name: "Role Donatur Biasa (Hanya dicabut dari user saat expired)",
+              name: "Role Donatur TOWA (Hanya dicabut dari user saat expired)",
               value: "DONATOR_ROLE",
             },
             {
