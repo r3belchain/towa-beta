@@ -6,6 +6,7 @@ import {
   ChannelType,
   ComponentType,
   EmbedBuilder,
+  MessageFlags,
   PermissionFlagsBits,
   StringSelectMenuBuilder,
 } from "discord.js";
@@ -15,7 +16,7 @@ import { supabase } from "../../config/supabase.js";
 
 // HANDLER TICKET_CREATE
 export async function handleTicketOpen(interaction) {
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const { guild, user, customId } = interaction;
 
@@ -153,15 +154,14 @@ export async function handleTicketOpen(interaction) {
       permissionOverwrites,
     });
 
-
-    // CUSTOM EMBED INJECTION 
+    // CUSTOM EMBED INJECTION
 
     let embed;
 
     if (selectedCategoryName.toLowerCase() === "bikin-rt") {
       embed = new EmbedBuilder()
         .setTitle(`📝 Loket Pendaftaran RT TOWA - ${user.username}`)
-        .setColor("#FFD700") 
+        .setColor("#FFD700")
         .setDescription(
           `Halo <@${user.id}>, selamat datang di loket Pendaftaran RT TOWA!\n\n` +
             `Silakan **copy-paste** dan isi formulir di bawah ini, lalu kirim kembali ke channel tiket ini:`,
@@ -195,7 +195,6 @@ export async function handleTicketOpen(interaction) {
         .setThumbnail(guild.iconURL({ dynamic: true, size: 256 }))
         .setFooter({ text: "Sistem Tiket Resmi TOWA" });
     } else {
-      
       let ticketDescription =
         `Halo <@${user.id}>!\n\n` +
         `Terima kasih telah menghubungi kami. Tim Staff akan segera merespons tiketmu.\n` +
