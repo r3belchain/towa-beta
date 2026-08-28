@@ -116,8 +116,12 @@ export async function handleTicketCommand(interaction) {
           buttonLabel = "Daftar RT";
         } else if (cat === "donasi") {
           buttonLabel = "Kirim Donasi";
-        } else if (cat === "laporan") {
-          buttonLabel = "Buat Laporan";
+        } else if (
+          cat === "laporan" ||
+          cat === "laporan-warga" ||
+          cat === "laporan warga"
+        ) {
+          buttonLabel = "Buka Tiket Laporan Warga";
         } else {
           buttonLabel = `Buka Tiket ${targetCategory}`;
         }

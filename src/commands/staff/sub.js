@@ -1,7 +1,7 @@
 import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
   EmbedBuilder,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
 } from "discord.js";
 import { supabase } from "../../config/supabase.js";
 
@@ -124,7 +124,6 @@ export async function execute(interaction) {
 
       const now = new Date();
 
-   
       if (!startDateInput && existingSub && existingSub.expired_at) {
         const currentExpiry = new Date(existingSub.expired_at);
         if (currentExpiry > now) {
