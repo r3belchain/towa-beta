@@ -131,7 +131,7 @@ export async function handleTicketCommand(interaction) {
       const ticketBtn = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(buttonCustomId)
-          .setLabel(buttonLabel) 
+          .setLabel(buttonLabel)
           .setEmoji("📩")
           .setStyle(ButtonStyle.Primary),
       );

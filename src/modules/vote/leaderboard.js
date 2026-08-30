@@ -90,7 +90,7 @@ export function startMonthlyResetCron(client) {
         if (channel && embedFinal) {
           await channel.send({
             content:
-              "🔥 **[REKAP LEADERBOARD VOTE - FASE WARMING UP]** 🔥\n\nTerima kasih untuk warga yang sudah berpartisipasi di periode *Warming Up* bulan ini! Berhubung masih dalam tahap uji coba & pemanasan, **belum ada role reward yang dibagikan** untuk periode kali ini.\n\n*Poin leaderboard resmi telah di-reset ke 0 untuk menyambut bulan baru.*",
+              "📢 **REKAP LEADERBOARD VOTE - FASE WARMING UP** 📢\n\nTerima kasih untuk warga yang sudah berpartisipasi di periode *Warming Up* akhir bulan ini! Berhubung masih dalam tahap uji coba & pemanasan, **belum ada role reward yang dibagikan** untuk periode kali ini.\n\n*Poin leaderboard resmi telah di-reset ke 0 untuk menyambut bulan baru.*",
             embeds: [embedFinal],
           });
           console.log(
