@@ -127,17 +127,22 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     try {
       const bgImage = await loadImage(userKtpData.background_url);
       ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+
+
+      ctx.fillStyle = "rgba(15, 15, 15, 0.8)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     } catch {
-      ctx.fillStyle = "#fff5e3";
+  
+      ctx.fillStyle = "#1e140a";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
   } else {
     const gradient = ctx.createLinearGradient(0, 0, 1280, 720);
-    gradient.addColorStop(0, "#fff1d4");
-    gradient.addColorStop(0.5, "#fce0a2");
-    gradient.addColorStop(1, "#f8d07c");
+
+
+    gradient.addColorStop(0, "#0f172a"); 
+    gradient.addColorStop(0.5, "#331800"); 
+    gradient.addColorStop(1, "#9a3412"); 
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -251,6 +256,8 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     startY + gapText,
   );
 
+
+  // RENDER BADGE 
   const rightStartX = 405;
 
   ctx.fillStyle = "#64748b";
@@ -268,7 +275,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   } else {
     let badgeX = rightStartX;
     const badgeY = 160;
-    const badgeSize = 85;
+    const badgeSize = 65;
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
@@ -277,31 +284,18 @@ export async function generateWargaCard(member, userStats, userKtpData) {
       try {
         const badgeImg = await loadImage(badge.path);
         ctx.drawImage(badgeImg, badgeX, badgeY, badgeSize, badgeSize);
-        badgeX += badgeSize + 5;
+        badgeX += badgeSize + 8;
       } catch (err) {
-        console.error(`Gagal muat badge: ${badge.path}`);
+        console.error(`Gagal memuat gambar badge dari path: ${badge.path}`);
       }
     }
   }
 
 
   // RENDER ROLE 
-
-  // Fungsi Helper 
-  function getTextColorForBackground(hexColor) {
-    const color =
-      hexColor.charAt(0) === "#" ? hexColor.substring(1, 7) : hexColor;
-    const r = parseInt(color.substring(0, 2), 16);
-    const g = parseInt(color.substring(2, 4), 16);
-    const b = parseInt(color.substring(4, 6), 16);
-    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-    return yiq >= 128 ? "#1e293b" : "#FFFFFF";
-  }
-
-  const roleStartY = 275;
   ctx.fillStyle = "#64748b";
   ctx.font = "bold 13px Poppins";
-  ctx.fillText("ROLE", rightStartX, roleStartY - 10);
+  ctx.fillText("ROLE", rightStartX, 240); 
 
   const topRoles = Array.from(member.roles.cache.values())
     .filter((role) => OFFICIAL_ROLES.includes(role.id) || BADGE_CONFIG[role.id])
@@ -311,7 +305,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   if (topRoles.length === 0) {
     ctx.fillStyle = "#94a3b8";
     ctx.font = "italic 14px Poppins";
-    ctx.fillText("Warga", rightStartX, roleStartY + 20);
+    ctx.fillText("Warga", rightStartX, 270);
   } else {
     let roleX = rightStartX;
     for (const role of topRoles) {
@@ -319,24 +313,16 @@ export async function generateWargaCard(member, userStats, userKtpData) {
       const pillWidth = ctx.measureText(role.name).width + 40;
       const pillHeight = 36;
 
-      let rColor = role.hexColor !== "#000000" ? role.hexColor : "#94a3b8";
+    
+      const rColor = role.hexColor !== "#000000" ? role.hexColor : "#94a3b8";
 
-      let tColor = getTextColorForBackground(rColor);
-
-      if (tColor === "#1e293b" && rColor.toLowerCase() !== "#94a3b8") {
-        rColor = "#e2e8f0";
-      }
-
-      fillRoundRect(ctx, roleX, roleStartY, pillWidth, pillHeight, 10, rColor);
+   
+      fillRoundRect(ctx, roleX, 250, pillWidth, pillHeight, 10, rColor);
 
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = tColor; 
-      ctx.fillText(
-        role.name,
-        roleX + pillWidth / 2,
-        roleStartY + pillHeight / 2,
-      );
+      ctx.fillStyle = "#FFFFFF"; 
+      ctx.fillText(role.name, roleX + pillWidth / 2, 250 + pillHeight / 2);
 
       roleX += pillWidth + 12;
     }
@@ -414,9 +400,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.font = "italic 16px Poppins";
 
   const rawQuote = userKtpData?.quote;
-  const quoteText = rawQuote
-    ? `"${rawQuote}"`
-    : '"Belum ada quote"';
+  const quoteText = rawQuote ? `"${rawQuote}"` : '"Belum ada quote"';
 
   wrapText(ctx, quoteText, rightStartX, 615, 800, 24);
 
