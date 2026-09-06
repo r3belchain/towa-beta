@@ -5,6 +5,7 @@ import {
   getOrCreateWargaCard,
   updateWargaBackground,
   updateWargaDescription,
+  updateWargaQuote,
 } from "../../services/databaseService.js";
 
 export const data = new SlashCommandBuilder()
