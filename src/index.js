@@ -20,7 +20,6 @@ import * as voiceStateUpdateEvent from "./events/voiceStateUpdate.js";
 
 // COMMAND DATA & BACKGROUND SERVICES
 
-import { data as subCommandData } from "./commands/staff/sub.js";
 import { verifyGirlCommandData } from "./modules/roles/verifyGirl.js";
 import { verifyKebalCommandData } from "./modules/roles/verifyKebal.js";
 import {
@@ -46,6 +45,8 @@ import {
 } from "./modules/vote/leaderboard.js";
 import { startTopGGWebhook } from "./modules/vote/voteTracker.js";
 import { cacheUserInfo } from "./utils/userCache.js";
+
+import { loadModularCommands } from "./handlers/commandHandler.js";
 
 // SETUP DISCORD CLIENT
 const client = new Client({
@@ -132,20 +133,26 @@ client.once(Events.ClientReady, async () => {
     const rest = new REST({ version: "10" }).setToken(
       process.env.DISCORD_BOT_TOKEN,
     );
+
+    const modularCommands = await loadModularCommands(client);
+
+    const allCommands = [
+      leaderboardCommandData.toJSON(),
+      parkirCommandData.toJSON(),
+      unparkirCommandData.toJSON(),
+      verifyKebalCommandData.toJSON(),
+      verifyGirlCommandData.toJSON(),
+      ticketCommandData.toJSON(),
+      ticketCategoryCommandData.toJSON(),
+      ...modularCommands, //
+    ];
+
     await rest.put(Routes.applicationGuildCommands(client.user.id, GUILD_ID), {
-      body: [
-        leaderboardCommandData.toJSON(),
-        parkirCommandData.toJSON(),
-        unparkirCommandData.toJSON(),
-        verifyKebalCommandData.toJSON(),
-        verifyGirlCommandData.toJSON(),
-        ticketCommandData.toJSON(),
-        ticketCategoryCommandData.toJSON(),
-        subCommandData.toJSON(),
-      ],
+      body: allCommands,
     });
+
     console.log(
-      "✅ Guild Commands (Leaderboard, Parkir, Verify, Ticket System) berhasil terdaftar di Server TOWA!",
+      "✅ Guild Commands (Legacy & Modular) berhasil terdaftar di Server TOWA!",
     );
   } catch (err) {
     console.error("❌ Gagal mendaftarkan Slash Command:", err.message);

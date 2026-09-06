@@ -1,5 +1,6 @@
 import { Events } from "discord.js";
 import { handleVoteMessage } from "../modules/vote/voteTracker.js";
+import { trackChatXp } from "../services/chatXpService.js";
 
 export const name = Events.MessageCreate;
 
@@ -8,4 +9,5 @@ export async function execute(message, client) {
   if (message.author.id === client.user.id) return;
 
   await handleVoteMessage(client, message);
+  await trackChatXp(message);
 }
