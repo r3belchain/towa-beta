@@ -324,7 +324,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
 
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = "#FFFFFF"; 
+      ctx.fillStyle = "#030201"; 
       ctx.fillText(role.name, roleX + pillWidth / 2, 250 + pillHeight / 2);
 
       roleX += pillWidth + 12;
