@@ -50,23 +50,26 @@ const GENDER_CONFIG = {
   "1515424081242095798": "Unverified Girl",
 };
 
-// Panel Light Mode Premium
+// Panel Dark Mode TOWA
 function drawLightPanel(ctx, x, y, width, height, radius) {
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
 
-  ctx.shadowColor = "rgba(0, 0, 0, 0.05)";
+
+  ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
   ctx.shadowBlur = 15;
   ctx.shadowOffsetY = 5;
 
-  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+
+  ctx.fillStyle = "rgba(15, 23, 42, 0.7)"; 
   ctx.fill();
 
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = "rgba(255, 255, 255, 1)";
+
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "rgba(234, 88, 12, 0.4)"; 
   ctx.stroke();
 }
 
@@ -188,7 +191,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.shadowBlur = 0;
 
   ctx.textAlign = "center";
-  ctx.fillStyle = "#0f172a";
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = "bold 26px Poppins";
   ctx.fillText(member.displayName, centerX, 340);
   ctx.fillStyle = "#64748b";
@@ -204,7 +207,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.fillStyle = TOWA_COLOR;
   ctx.font = "bold 12px Poppins";
   ctx.fillText("BIO", leftX, startY);
-  ctx.fillStyle = "#1e293b";
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = "15px Poppins";
   const descText = userKtpData?.description || "Belum ada deskripsi";
   ctx.fillText(
@@ -220,7 +223,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.fillStyle = TOWA_COLOR;
   ctx.font = "bold 12px Poppins";
   ctx.fillText("MEMBER SEJAK", leftX, startY);
-  ctx.fillStyle = "#1e293b";
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = "bold 15px Poppins";
   ctx.fillText(joinDate, leftX, startY + gapText);
 
@@ -237,7 +240,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     ? GENDER_CONFIG[userGenderRole.id]
     : "No Gender";
 
-  ctx.fillStyle = "#1e293b";
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = "bold 15px Poppins";
   ctx.fillText(genderText, leftX, startY + gapText);
 
@@ -248,7 +251,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.fillStyle = TOWA_COLOR;
   ctx.font = "bold 12px Poppins";
   ctx.fillText("RT", leftX, startY);
-  ctx.fillStyle = "#1e293b";
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = "bold 15px Poppins";
   ctx.fillText(
     userRtRole ? RT_CONFIG[userRtRole.id] : "Belum Bergabung",
@@ -260,7 +263,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   // RENDER BADGE 
   const rightStartX = 405;
 
-  ctx.fillStyle = "#64748b";
+  ctx.fillStyle = "#cbd5e1";
   ctx.font = "bold 13px Poppins";
   ctx.fillText("BADGE", rightStartX, 150);
 
@@ -269,7 +272,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     .map((role) => BADGE_CONFIG[role.id]);
 
   if (userBadges.length === 0) {
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = "#cbd5e1";
     ctx.font = "italic 14px Poppins";
     ctx.fillText("Belum ada badge", rightStartX, 180);
   } else {
@@ -293,7 +296,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
 
 
   // RENDER ROLE 
-  ctx.fillStyle = "#64748b";
+  ctx.fillStyle = "#cbd5e1";
   ctx.font = "bold 13px Poppins";
   ctx.fillText("ROLE", rightStartX, 240); 
 
@@ -337,7 +340,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   const voiceProg = getVoiceProgress(vPoints);
   const highestLevel = Math.max(chatProg.currentLevel, voiceProg.currentLevel);
 
-  ctx.fillStyle = "#0f172a";
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = "bold 20px Poppins";
   ctx.fillText(`WARGA LEVEL ${highestLevel}`, rightStartX, 360);
 
@@ -345,7 +348,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.font = "bold 15px Poppins";
   ctx.fillText(`Total ${cPoints + vPoints} XP`, rightStartX, 390);
 
-  ctx.fillStyle = "#64748b";
+  ctx.fillStyle = "#8296b1";
   ctx.font = "15px Poppins";
   const totalXpWidth = ctx.measureText(`Total ${cPoints + vPoints} XP`).width;
   ctx.fillText(
@@ -357,7 +360,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   const barWidth = 790;
   const barHeight = 14;
 
-  ctx.fillStyle = "#334155";
+  ctx.fillStyle = "#687fa0";
   ctx.font = "13px Poppins";
   ctx.fillText(
     `Voice Lv.${chatProg.currentLevel} • ${chatProg.percentage}%`,
@@ -374,7 +377,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     TOWA_COLOR,
   );
 
-  ctx.fillStyle = "#334155";
+  ctx.fillStyle = "#5a708f";
   ctx.font = "13px Poppins";
   ctx.fillText(
     `Chat Lv.${voiceProg.currentLevel} • ${voiceProg.percentage}%`,
@@ -391,12 +394,12 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     "#0ea5e9",
   );
 
-  // ISI PANEL KANAN BAWAH (QUOTE)
-  ctx.fillStyle = "#0f172a";
+  // ISI PANEL KANAN BAWAH (QUOTE)  
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = "bold 18px Poppins";
   ctx.fillText("QUOTE ASBUN", rightStartX, 580);
 
-  ctx.fillStyle = "#64748b";
+  ctx.fillStyle = "#899ab1";
   ctx.font = "italic 16px Poppins";
 
   const rawQuote = userKtpData?.quote;
