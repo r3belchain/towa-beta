@@ -460,6 +460,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   const voiceColor = resolveColor(theme, theme.progressVoice);
   const chatColor = resolveColor(theme, theme.progressChat);
 
+  // --- BAR VOICE ---
   ctx.fillStyle = theme.textSecondary;
   ctx.font = "13px Poppins";
   ctx.fillText(
@@ -473,11 +474,12 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     435,
     barWidth,
     barHeight,
-    chatProg.percentage,
+    voiceProg.percentage,
     voiceColor,
     theme.progressTrack,
   );
 
+  // --- BAR CHAT ---
   ctx.fillStyle = theme.textSecondary;
   ctx.font = "13px Poppins";
   ctx.fillText(
@@ -491,7 +493,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     480,
     barWidth,
     barHeight,
-    voiceProg.percentage,
+    chatProg.percentage,
     chatColor,
     theme.progressTrack,
   );
