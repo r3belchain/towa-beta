@@ -1,4 +1,4 @@
-const TOWA_COLOR = "#df9d00";
+export const TOWA_COLOR = "#df9d00";
 
 export const BADGE_CONFIG = {
   "1526878458763018410": { path: "./assets/badges/juragantowa.png" },
