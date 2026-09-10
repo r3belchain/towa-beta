@@ -99,3 +99,21 @@ export async function updateChatXpInDatabase(userId, earnedXp) {
     throw error;
   }
 }
+
+export async function updateWargaHobi(userId, text) {
+  await getOrCreateWargaCard(userId);
+  const { error } = await supabase
+    .from("warga_cards")
+    .update({ hobi: text })
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function updateWargaStatus(userId, statusId) {
+  await getOrCreateWargaCard(userId);
+  const { error } = await supabase
+    .from("warga_cards")
+    .update({ status_hubungan: statusId })
+    .eq("user_id", userId);
+  if (error) throw error;
+}

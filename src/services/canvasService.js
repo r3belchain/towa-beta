@@ -1,79 +1,96 @@
-// src/services/canvasService.js
-import { createCanvas, GlobalFonts, loadImage } from "@napi-rs/canvas";
-import { getChatProgress, getVoiceProgress } from "../utils/xpFormula.js";
+import { createCanvas, loadImage } from "@napi-rs/canvas";
+import { getStatusLabel } from "./statusOptions.js";
+import { getTheme } from "./themes.js";
 
-GlobalFonts.registerFromPath("./assets/Poppins-Regular.ttf", "Poppins");
+import {
+  BADGE_CONFIG,
+  GENDER_CONFIG,
+  OFFICIAL_ROLES,
+  RT_CONFIG,
+  TOWA_COLOR,
+} from "../config/towaCardConfig.js";
+import { getChatProgress, getVoiceProgress } from "../utils/leveling.js";
 
-const TOWA_COLOR = "#df9d00";
+// ============================================================
+// LAYOUT CONSTANTS
+// Semua angka posisi terpusat di sini — ubah proporsi cukup di satu tempat,
+// tidak perlu berburu magic number di tengah fungsi render.
+// ============================================================
+const CANVAS_W = 1280;
+const CANVAS_H = 720;
+const PANEL_RADIUS = 16;
 
-const BADGE_CONFIG = {
-  "1526878458763018410": { path: "./assets/badges/juragantowa.png" },
-  "1532350126821998775": { path: "./assets/badges/pemilikradio.png" },
-  "1526878454979760128": { path: "./assets/badges/wargasultan.png" },
-  "1516399288685428776": { path: "./assets/badges/bintangtongkron.png" },
-  "1515371766095020163": { path: "./assets/badges/sesepuhtowa.png" },
-  "1541141957840076840": { path: "./assets/badges/goldentowa.png" },
-  "1520005363481575454": { path: "./assets/badges/buronantongkrongan.png" },
-  "1529848076435460166": { path: "./assets/badges/dutatongkrongan.png" },
-  "1519454790701158530": { path: "./assets/badges/humastongkrongan.png" },
-  "1520004891890683965": { path: "./assets/badges/premanchat.png" },
-  "1529441217673298023": { path: "./assets/badges/sepuhtongkrong.png" },
-  "1516349873690116166": { path: "./assets/badges/wargapremium.png" },
-  "1515344731041959999": { path: "./assets/badges/wargateraktif.png" },
-};
-
-const OFFICIAL_ROLES = [
-  "1515475556127211560", // ID Owner
-  "1515334583686660146", // ID Three of Founder
-  "1515470585574981813", // ID Pejabat
-  "1515475636242612297", // ID Mekanik TOWA
-  "1533030542432403507", // ID MENTERI
-  "1515475617641005156", // ID MODERATOR
-  "1515478413484494949", // ID GUIDE
-  "1520545354259370026", // ID MEDIA SQUAD
-  "1523980859441414296", // ID BANDAR EVENT
-  "1515476142591840456", // ID TUKANG RAMEIN
-  "1515325537994805389", // ID WARGA
+const LEFT_PANEL = { x: 40, y: 120, w: 360, h: 560 };
+const RIGHT_PANEL_X = LEFT_PANEL.x + LEFT_PANEL.w + 30; // 430
+const RIGHT_PANEL_W = 1240 - RIGHT_PANEL_X; // 810, simetris dgn margin kanan 40
+const RIGHT_PANELS = [
+  { y: 120, h: 190 }, // BADGE + ROLE
+  { y: 330, h: 190 }, // LEVELING
+  { y: 540, h: 140 }, // QUOTE
 ];
 
-const RT_CONFIG = {
-  "1521878181978706141": "RT 01 Nona",  
-  "1523236620092969082": "RT 02 Ternak Lele",
-  "1523594367124635680": "RT 03 Eternal Journey",
-  "1535326111356162058": "RT 04 Reverie Amity",
-  "1537520964391407626": "RT 05 Seraphyx Noir",
-};
+const AVATAR = { cx: LEFT_PANEL.x + LEFT_PANEL.w / 2, cy: 205, r: 55 };
+const NAME_Y = AVATAR.cy + AVATAR.r + 50; // 310
+const USERNAME_Y = NAME_Y + 22; // 332
 
-const GENDER_CONFIG = {
-  "1515423594954489957": "Boy",
-  "1515423730816253962": "Girl",
-  "1515424081242095798": "Unverified Girl",
-};
+const LEFT_PAD_X = 25;
+const LEFT_CONTENT_X = LEFT_PANEL.x + LEFT_PAD_X; // 65
+const LEFT_CONTENT_MAX_W = LEFT_PANEL.w - LEFT_PAD_X * 2; // 310
+const FIELDS_START_Y = 368;
+const LABEL_FONT = "bold 11px Poppins";
+const VALUE_FONT = "14px Poppins";
+const VALUE_FONT_BOLD = "bold 14px Poppins";
+const LABEL_GAP = 15; // jarak label -> baris pertama value
+const LINE_HEIGHT = 17; // tinggi tiap baris value (dipakai utk wrap)
+const FIELD_GAP = 12; // jarak antara field satu ke field berikutnya
 
-// Panel Dark Mode TOWA
-function drawLightPanel(ctx, x, y, width, height, radius) {
+const RIGHT_PAD_X = 35;
+const RIGHT_CONTENT_X = RIGHT_PANEL_X + RIGHT_PAD_X;
+const RIGHT_CONTENT_W = RIGHT_PANEL_W - RIGHT_PAD_X * 2;
+
+// ============================================================
+// COLOR HELPERS
+// ============================================================
+function hexToRgb(hex) {
+  const clean = hex.replace("#", "");
+  const bigint = parseInt(clean, 16);
+  return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+}
+
+function withAlpha(hex, alpha) {
+  const { r, g, b } = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+// "accent" di theme config berarti "pakai TOWA_COLOR" — resolve di sini
+// supaya themes.js tidak perlu import TOWA_COLOR dan bisa tetap jadi
+// pure data config.
+function resolveColor(theme, value) {
+  return value === "accent" ? TOWA_COLOR : value;
+}
+
+// ============================================================
+// DRAW PRIMITIVES
+// ============================================================
+function drawPanel(ctx, x, y, width, height, radius, theme) {
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
-
 
   ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
   ctx.shadowBlur = 15;
   ctx.shadowOffsetY = 5;
 
-
-  ctx.fillStyle = "rgba(15, 23, 42, 0.7)"; 
+  ctx.fillStyle = theme.panelFill;
   ctx.fill();
 
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
-
   ctx.lineWidth = 1.5;
-  ctx.strokeStyle = "rgba(234, 88, 12, 0.4)"; 
+  ctx.strokeStyle = withAlpha(TOWA_COLOR, theme.panelBorderAlpha);
   ctx.stroke();
 }
 
-// Kotak Rounded Solid
 function fillRoundRect(ctx, x, y, width, height, radius, color) {
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -81,29 +98,19 @@ function fillRoundRect(ctx, x, y, width, height, radius, color) {
   ctx.fill();
 }
 
-// Auto Text Wrapping
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
-  const words = text.split(" ");
-  let line = "";
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + " ";
-    const metrics = ctx.measureText(testLine);
-    if (metrics.width > maxWidth && n > 0) {
-      ctx.fillText(line, x, y);
-      line = words[n] + " ";
-      y += lineHeight;
-    } else {
-      line = testLine;
-    }
-  }
-  ctx.fillText(line, x, y);
-}
-
-// Progress Bar
-function drawProgressBar(ctx, x, y, width, height, percentage, color) {
+function drawProgressBar(
+  ctx,
+  x,
+  y,
+  width,
+  height,
+  percentage,
+  color,
+  trackColor,
+) {
   const radius = height / 2;
 
-  ctx.fillStyle = "#e2e8f0";
+  ctx.fillStyle = trackColor;
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
   ctx.fill();
@@ -121,184 +128,278 @@ function drawProgressBar(ctx, x, y, width, height, percentage, color) {
   }
 }
 
+// Draw langsung (dipakai untuk QUOTE, yang lebar & tingginya lebih longgar).
+function wrapTextDraw(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(" ");
+  let line = "";
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line + words[n] + " ";
+    const metrics = ctx.measureText(testLine);
+    if (metrics.width > maxWidth && n > 0) {
+      ctx.fillText(line, x, y);
+      line = words[n] + " ";
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, y);
+  return y;
+}
+
+// Versi "measure only" dengan batas maxLines — dipakai kolom kiri supaya
+// tidak pernah overflow keluar panel walau isinya panjang. Baris terakhir
+// di-ellipsize kalau masih ada sisa teks yang tidak muat.
+function wrapLinesWithLimit(ctx, text, maxWidth, maxLines) {
+  const words = text.split(" ");
+  const lines = [];
+  let line = "";
+
+  for (let n = 0; n < words.length; n++) {
+    const testLine = line ? `${line} ${words[n]}` : words[n];
+    if (ctx.measureText(testLine).width > maxWidth && line) {
+      lines.push(line);
+      line = words[n];
+      if (lines.length === maxLines) break;
+    } else {
+      line = testLine;
+    }
+  }
+  if (lines.length < maxLines && line) lines.push(line);
+
+  // Ada sisa kata yang belum masuk -> ellipsize baris terakhir
+  const consumedWords = lines.join(" ").split(" ").length;
+  if (consumedWords < words.length && lines.length > 0) {
+    let last = lines[lines.length - 1];
+    while (ctx.measureText(last + "...").width > maxWidth && last.length > 0) {
+      last = last.slice(0, -1).trimEnd();
+    }
+    lines[lines.length - 1] = last + "...";
+  }
+
+  return lines.length > 0 ? lines : [""];
+}
+
+// ============================================================
+// KOLOM KIRI — renderer dinamis
+// Setiap field naikkan cursorY sesuai jumlah baris HASIL WRAP-nya sendiri,
+// bukan angka gap yang di-hardcode sama rata untuk semua field. Ini yang
+// bikin Bio bisa dapat 2 baris tanpa field lain jadi berantakan / overflow.
+// ============================================================
+function renderLeftFields(ctx, fields, theme) {
+  let cursorY = FIELDS_START_Y;
+
+  for (const field of fields) {
+    ctx.textAlign = "left";
+    ctx.fillStyle = TOWA_COLOR;
+    ctx.font = LABEL_FONT;
+    ctx.fillText(field.label, LEFT_CONTENT_X, cursorY);
+
+    ctx.fillStyle = theme.textPrimary;
+    ctx.font = field.bold === false ? VALUE_FONT : VALUE_FONT_BOLD;
+
+    const lines = wrapLinesWithLimit(
+      ctx,
+      field.value,
+      LEFT_CONTENT_MAX_W,
+      field.maxLines || 1,
+    );
+
+    let lineY = cursorY + LABEL_GAP;
+    for (const line of lines) {
+      ctx.fillText(line, LEFT_CONTENT_X, lineY);
+      lineY += LINE_HEIGHT;
+    }
+
+    cursorY = lineY - LINE_HEIGHT + LINE_HEIGHT + FIELD_GAP;
+  }
+
+  return cursorY; // berguna buat cek sisa ruang saat development
+}
+
+// ============================================================
+// MAIN
+// ============================================================
 export async function generateWargaCard(member, userStats, userKtpData) {
-  const canvas = createCanvas(1280, 720);
+  const theme = getTheme(userKtpData?.theme);
+
+  const canvas = createCanvas(CANVAS_W, CANVAS_H);
   const ctx = canvas.getContext("2d");
 
-  // BACKGROUND LAYER
+  // ---------- BACKGROUND ----------
   if (userKtpData?.background_url) {
     try {
       const bgImage = await loadImage(userKtpData.background_url);
       ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
 
-
-      ctx.fillStyle = "rgba(15, 15, 15, 0.8)";
+      // Overlay ikut tema (gelap utk dark theme, putih tipis utk light theme)
+      // supaya teks tetap terbaca di atas foto custom apapun.
+      ctx.fillStyle = withAlpha(theme.bgOverlayColor, theme.bgOverlayAlpha);
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     } catch {
-  
-      ctx.fillStyle = "#1e140a";
+      ctx.fillStyle = theme.bgGradient[0];
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
   } else {
-    const gradient = ctx.createLinearGradient(0, 0, 1280, 720);
-
-
-    gradient.addColorStop(0, "#0f172a"); 
-    gradient.addColorStop(0.5, "#331800"); 
-    gradient.addColorStop(1, "#9a3412"); 
-
+    const gradient = ctx.createLinearGradient(0, 0, CANVAS_W, CANVAS_H);
+    const stops = theme.bgGradient;
+    stops.forEach((color, i) => {
+      gradient.addColorStop(i / (stops.length - 1), color);
+    });
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // HEADER
+  // ---------- HEADER ----------
   ctx.fillStyle = TOWA_COLOR;
   ctx.font = "bold 40px Poppins";
   ctx.fillText("TOWA CARD", 40, 80);
 
-  // SUSUNAN PANEL
-  const panelRadius = 16;
-  drawLightPanel(ctx, 40, 120, 300, 560, panelRadius);
-  drawLightPanel(ctx, 370, 120, 870, 190, panelRadius);
-  drawLightPanel(ctx, 370, 330, 870, 190, panelRadius);
-  drawLightPanel(ctx, 370, 540, 870, 140, panelRadius);
+  // ---------- PANELS ----------
+  drawPanel(
+    ctx,
+    LEFT_PANEL.x,
+    LEFT_PANEL.y,
+    LEFT_PANEL.w,
+    LEFT_PANEL.h,
+    PANEL_RADIUS,
+    theme,
+  );
+  for (const p of RIGHT_PANELS) {
+    drawPanel(ctx, RIGHT_PANEL_X, p.y, RIGHT_PANEL_W, p.h, PANEL_RADIUS, theme);
+  }
 
-  // PANEL KIRI (PROFIL)
+  // ---------- AVATAR ----------
   const avatarUrl = member.user.displayAvatarURL({
     extension: "png",
     size: 256,
   });
   const avatar = await loadImage(avatarUrl);
 
-  const centerX = 190;
-
-  // Avatar
   ctx.save();
   ctx.beginPath();
-  ctx.arc(centerX, 230, 75, 0, Math.PI * 2, true);
+  ctx.arc(AVATAR.cx, AVATAR.cy, AVATAR.r, 0, Math.PI * 2, true);
   ctx.closePath();
   ctx.clip();
-  ctx.drawImage(avatar, centerX - 75, 155, 150, 150);
+  ctx.drawImage(
+    avatar,
+    AVATAR.cx - AVATAR.r,
+    AVATAR.cy - AVATAR.r,
+    AVATAR.r * 2,
+    AVATAR.r * 2,
+  );
   ctx.restore();
 
   ctx.beginPath();
-  ctx.arc(centerX, 230, 75, 0, Math.PI * 2, true);
-  ctx.lineWidth = 5;
+  ctx.arc(AVATAR.cx, AVATAR.cy, AVATAR.r, 0, Math.PI * 2, true);
+  ctx.lineWidth = 4;
   ctx.strokeStyle = TOWA_COLOR;
-  ctx.shadowColor = "rgba(223, 157, 0, 0.3)";
+  ctx.shadowColor = withAlpha(TOWA_COLOR, 0.3);
   ctx.shadowBlur = 10;
   ctx.stroke();
   ctx.shadowBlur = 0;
 
   ctx.textAlign = "center";
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 26px Poppins";
-  ctx.fillText(member.displayName, centerX, 340);
-  ctx.fillStyle = "#64748b";
-  ctx.font = "16px Poppins";
-  ctx.fillText(`@${member.user.username}`, centerX, 365);
-
-  ctx.textAlign = "left";
-  const leftX = 65;
-  let startY = 430;
-  const gapCategory = 60;
-  const gapText = 20;
-
-  ctx.fillStyle = TOWA_COLOR;
-  ctx.font = "bold 12px Poppins";
-  ctx.fillText("BIO", leftX, startY);
-  ctx.fillStyle = "#FFFFFF";
+  ctx.fillStyle = theme.textPrimary;
+  ctx.font = "bold 24px Poppins";
+  ctx.fillText(member.displayName, AVATAR.cx, NAME_Y);
+  ctx.fillStyle = theme.textSecondary;
   ctx.font = "15px Poppins";
-  const descText = userKtpData?.description || "Belum ada deskripsi";
-  ctx.fillText(
-    descText.length > 25 ? descText.substring(0, 25) + "..." : descText,
-    leftX,
-    startY + gapText,
-  );
+  ctx.fillText(`@${member.user.username}`, AVATAR.cx, USERNAME_Y);
+  ctx.textAlign = "left";
 
-  startY += gapCategory;
+  // ---------- KOLOM KIRI: 6 FIELD ----------
   const joinDate = new Intl.DateTimeFormat("id-ID", {
     dateStyle: "long",
   }).format(member.joinedAt);
-  ctx.fillStyle = TOWA_COLOR;
-  ctx.font = "bold 12px Poppins";
-  ctx.fillText("MEMBER SEJAK", leftX, startY);
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 15px Poppins";
-  ctx.fillText(joinDate, leftX, startY + gapText);
-
-  startY += gapCategory;
-  ctx.fillStyle = TOWA_COLOR;
-  ctx.font = "bold 12px Poppins";
-  ctx.fillText("GENDER", leftX, startY);
 
   const userGenderRole = Array.from(member.roles.cache.values()).find(
     (role) => GENDER_CONFIG[role.id],
   );
-
   const genderText = userGenderRole
     ? GENDER_CONFIG[userGenderRole.id]
     : "No Gender";
 
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 15px Poppins";
-  ctx.fillText(genderText, leftX, startY + gapText);
-
-  startY += gapCategory;
   const userRtRole = Array.from(member.roles.cache.values()).find(
     (role) => RT_CONFIG[role.id],
   );
-  ctx.fillStyle = TOWA_COLOR;
-  ctx.font = "bold 12px Poppins";
-  ctx.fillText("RT", leftX, startY);
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 15px Poppins";
-  ctx.fillText(
-    userRtRole ? RT_CONFIG[userRtRole.id] : "Belum Bergabung",
-    leftX,
-    startY + gapText,
-  );
+  const rtText = userRtRole ? RT_CONFIG[userRtRole.id] : "Belum Bergabung";
 
+  const leftFields = [
+    {
+      label: "BIO",
+      value: userKtpData?.description || "Belum ada deskripsi",
+      maxLines: 2,
+      bold: false,
+    },
+    { label: "MEMBER SEJAK", value: joinDate, maxLines: 1 },
+    { label: "GENDER", value: genderText, maxLines: 1 },
+    { label: "RT", value: rtText, maxLines: 1 },
+    { label: "HOBI", value: userKtpData?.hobi || "Belum diisi", maxLines: 1 },
+    {
+      label: "STATUS",
+      value: getStatusLabel(userKtpData?.status_hubungan),
+      maxLines: 1,
+    },
+  ];
 
-  // RENDER BADGE 
-  const rightStartX = 405;
+  renderLeftFields(ctx, leftFields, theme);
 
-  ctx.fillStyle = "#cbd5e1";
+  // ---------- BADGE ----------
+  ctx.fillStyle = theme.textSecondary;
   ctx.font = "bold 13px Poppins";
-  ctx.fillText("BADGE", rightStartX, 150);
+  ctx.fillText("BADGE", RIGHT_CONTENT_X, 150);
 
   const userBadges = Array.from(member.roles.cache.values())
     .filter((role) => BADGE_CONFIG[role.id])
     .map((role) => BADGE_CONFIG[role.id]);
 
   if (userBadges.length === 0) {
-    ctx.fillStyle = "#cbd5e1";
+    ctx.fillStyle = theme.textSecondary;
     ctx.font = "italic 14px Poppins";
-    ctx.fillText("Belum ada badge", rightStartX, 180);
+    ctx.fillText("Belum ada badge", RIGHT_CONTENT_X, 180);
   } else {
-    let badgeX = rightStartX;
+    const badgeSize = 60;
+    const badgeGap = 8;
+    // Panel kanan sekarang lebih sempit — batasi jumlah badge yang muat
+    // biar tidak tumpah keluar panel, alih-alih hardcode angka tetap.
+    const maxBadges = Math.max(
+      1,
+      Math.floor(RIGHT_CONTENT_W / (badgeSize + badgeGap)),
+    );
+    const visibleBadges = userBadges.slice(0, maxBadges);
+
+    let badgeX = RIGHT_CONTENT_X;
     const badgeY = 160;
-    const badgeSize = 65;
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
-    for (const badge of userBadges) {
+    for (const badge of visibleBadges) {
       try {
         const badgeImg = await loadImage(badge.path);
         ctx.drawImage(badgeImg, badgeX, badgeY, badgeSize, badgeSize);
-        badgeX += badgeSize + 8;
+        badgeX += badgeSize + badgeGap;
       } catch (err) {
         console.error(`Gagal memuat gambar badge dari path: ${badge.path}`);
       }
     }
+
+    if (userBadges.length > visibleBadges.length) {
+      ctx.fillStyle = theme.textSecondary;
+      ctx.font = "13px Poppins";
+      ctx.fillText(
+        `+${userBadges.length - visibleBadges.length}`,
+        badgeX + 4,
+        badgeY + badgeSize / 2 + 5,
+      );
+    }
   }
 
-
-  // RENDER ROLE 
-  ctx.fillStyle = "#cbd5e1";
+  // ---------- ROLE (sudah dibatasi max 3 di kode lama, dipertahankan) ----------
+  ctx.fillStyle = theme.textSecondary;
   ctx.font = "bold 13px Poppins";
-  ctx.fillText("ROLE", rightStartX, 240); 
+  ctx.fillText("ROLE", RIGHT_CONTENT_X, 240);
 
   const topRoles = Array.from(member.roles.cache.values())
     .filter((role) => OFFICIAL_ROLES.includes(role.id) || BADGE_CONFIG[role.id])
@@ -306,25 +407,22 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     .slice(0, 3);
 
   if (topRoles.length === 0) {
-    ctx.fillStyle = "#94a3b8";
+    ctx.fillStyle = theme.textSecondary;
     ctx.font = "italic 14px Poppins";
-    ctx.fillText("Warga", rightStartX, 270);
+    ctx.fillText("Warga", RIGHT_CONTENT_X, 270);
   } else {
-    let roleX = rightStartX;
+    let roleX = RIGHT_CONTENT_X;
     for (const role of topRoles) {
       ctx.font = "bold 16px Poppins";
       const pillWidth = ctx.measureText(role.name).width + 40;
       const pillHeight = 36;
-
-    
       const rColor = role.hexColor !== "#000000" ? role.hexColor : "#94a3b8";
 
-   
       fillRoundRect(ctx, roleX, 250, pillWidth, pillHeight, 10, rColor);
 
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillStyle = "#030201"; 
+      ctx.fillStyle = "#030201";
       ctx.fillText(role.name, roleX + pillWidth / 2, 250 + pillHeight / 2);
 
       roleX += pillWidth + 12;
@@ -333,94 +431,92 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
-  // ISI PANEL KANAN TENGAH (LEVELING)
+  // ---------- LEVELING ----------
   const cPoints = userStats?.chat_points || 0;
   const vPoints = userStats?.voice_points || 0;
   const chatProg = getChatProgress(cPoints);
   const voiceProg = getVoiceProgress(vPoints);
   const highestLevel = Math.max(chatProg.currentLevel, voiceProg.currentLevel);
 
-  ctx.fillStyle = "#FFFFFF";
+  ctx.fillStyle = theme.textPrimary;
   ctx.font = "bold 20px Poppins";
-  ctx.fillText(`WARGA LEVEL ${highestLevel}`, rightStartX, 360);
+  ctx.fillText(`WARGA LEVEL ${highestLevel}`, RIGHT_CONTENT_X, 360);
 
   ctx.fillStyle = TOWA_COLOR;
   ctx.font = "bold 15px Poppins";
-  ctx.fillText(`Total ${cPoints + vPoints} XP`, rightStartX, 390);
+  ctx.fillText(`Total ${cPoints + vPoints} XP`, RIGHT_CONTENT_X, 390);
 
-  ctx.fillStyle = "#8296b1";
+  ctx.fillStyle = theme.textSecondary;
   ctx.font = "15px Poppins";
   const totalXpWidth = ctx.measureText(`Total ${cPoints + vPoints} XP`).width;
   ctx.fillText(
     ` • Chat ${cPoints} XP • Voice ${vPoints} XP`,
-    rightStartX + totalXpWidth,
+    RIGHT_CONTENT_X + totalXpWidth,
     390,
   );
 
-  const barWidth = 790;
   const barHeight = 14;
+  const barWidth = RIGHT_CONTENT_W;
+  const voiceColor = resolveColor(theme, theme.progressVoice);
+  const chatColor = resolveColor(theme, theme.progressChat);
 
-  ctx.fillStyle = "#687fa0";
+  ctx.fillStyle = theme.textSecondary;
   ctx.font = "13px Poppins";
   ctx.fillText(
-    `Voice Lv.${chatProg.currentLevel} • ${chatProg.percentage}%`,
-    rightStartX,
+    `Voice Lv.${voiceProg.currentLevel} • ${voiceProg.percentage}%`,
+    RIGHT_CONTENT_X,
     425,
   );
   drawProgressBar(
     ctx,
-    rightStartX,
+    RIGHT_CONTENT_X,
     435,
     barWidth,
     barHeight,
     chatProg.percentage,
-    TOWA_COLOR,
+    voiceColor,
+    theme.progressTrack,
   );
 
-  ctx.fillStyle = "#5a708f";
+  ctx.fillStyle = theme.textSecondary;
   ctx.font = "13px Poppins";
   ctx.fillText(
-    `Chat Lv.${voiceProg.currentLevel} • ${voiceProg.percentage}%`,
-    rightStartX,
+    `Chat Lv.${chatProg.currentLevel} • ${chatProg.percentage}%`,
+    RIGHT_CONTENT_X,
     470,
   );
   drawProgressBar(
     ctx,
-    rightStartX,
+    RIGHT_CONTENT_X,
     480,
     barWidth,
     barHeight,
     voiceProg.percentage,
-    "#0ea5e9",
+    chatColor,
+    theme.progressTrack,
   );
 
-  // ISI PANEL KANAN BAWAH (QUOTE)  
-  ctx.fillStyle = "#FFFFFF";
+  // ---------- QUOTE ----------
+  ctx.fillStyle = theme.textPrimary;
   ctx.font = "bold 18px Poppins";
-  ctx.fillText("QUOTE ASBUN", rightStartX, 580);
+  ctx.fillText("QUOTE ASBUN", RIGHT_CONTENT_X, 580);
 
-  ctx.fillStyle = "#899ab1";
+  ctx.fillStyle = theme.textSecondary;
   ctx.font = "italic 16px Poppins";
-
   const rawQuote = userKtpData?.quote;
   const quoteText = rawQuote ? `"${rawQuote}"` : '"Belum ada quote"';
+  wrapTextDraw(ctx, quoteText, RIGHT_CONTENT_X, 615, RIGHT_CONTENT_W, 24);
 
-  wrapText(ctx, quoteText, rightStartX, 615, 800, 24);
-
-  // WATERMARK & FOOTER
-  // ID Warga
-  ctx.fillStyle = "#94a3b8";
+  // ---------- FOOTER ----------
+  ctx.fillStyle = theme.textSecondary;
   ctx.font = "bold 13px Poppins";
   ctx.textAlign = "left";
   ctx.fillText(`ID: ${member.id}`, 40, 705);
 
-  // Watermark Server
   ctx.fillStyle = TOWA_COLOR;
   ctx.font = "italic 13px Poppins";
   ctx.textAlign = "right";
   ctx.fillText("TOWA | Tongkrongan Warga Asbun", 1210, 705);
-
-  // Reset alignment to default
   ctx.textAlign = "left";
 
   return await canvas.encode("png");

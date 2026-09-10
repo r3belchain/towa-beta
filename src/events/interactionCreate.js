@@ -1,5 +1,6 @@
 import { Events } from "discord.js";
 
+// [IMPORT LAMA MILIKMU]
 import { handleVerifyGirl } from "../modules/roles/verifyGirl.js";
 import { handleVerifyKebal } from "../modules/roles/verifyKebal.js";
 import {
@@ -7,13 +8,21 @@ import {
   handleUnparkirCommand,
 } from "../modules/voice/parkingVoice.js";
 import { getLeaderboardEmbed } from "../modules/vote/leaderboard.js";
-
 import { handleTicketCommand } from "../modules/tickets/ticket.js";
 import { handleTicketCategoryCommand } from "../modules/tickets/ticketCategory.js";
 import {
   handleTicketClose,
   handleTicketOpen,
 } from "../modules/tickets/ticketHandler.js";
+
+// [TAMBAHAN: IMPORT HANDLER TOWA CARD BARU]
+// Pastikan path-nya sesuai dengan letak folder services kamu!
+import {
+  handleStatusSelect,
+  handleOpenEditModal,
+  handleEditModalSubmit,
+  IDS,
+} from "../services/towaCardEditHandler.js";
 
 export const name = Events.InteractionCreate;
 
@@ -27,7 +36,7 @@ export async function execute(interaction) {
         return;
       }
 
-      // SISTEM LEGACY LAMA 
+      // SISTEM LEGACY LAMA
       if (interaction.commandName === "leaderboard") {
         await interaction.deferReply();
         const embed = await getLeaderboardEmbed();
@@ -46,17 +55,31 @@ export async function execute(interaction) {
         await handleTicketCategoryCommand(interaction);
       }
     } else if (interaction.isButton()) {
-
+      // HANDLER TOMBOL
       if (interaction.customId.startsWith("TICKET_CREATE")) {
         await handleTicketOpen(interaction);
       } else if (interaction.customId === "TICKET_CLOSE") {
         await handleTicketClose(interaction);
       }
+      // [TAMBAHAN: Tombol Buka Modal Edit]
+      else if (interaction.customId === IDS.OPEN_MODAL_BUTTON_ID) {
+        await handleOpenEditModal(interaction);
+      }
+    }
+    // [TAMBAHAN: HANDLER SELECT MENU / DROPDOWN STATUS]
+    else if (interaction.isStringSelectMenu()) {
+      if (interaction.customId === IDS.STATUS_SELECT_ID) {
+        await handleStatusSelect(interaction);
+      }
+    }
+    // [TAMBAHAN: HANDLER SUBMIT MODAL BIO/QUOTE/HOBI]
+    else if (interaction.isModalSubmit()) {
+      if (interaction.customId === IDS.EDIT_MODAL_ID) {
+        await handleEditModalSubmit(interaction);
+      }
     }
   } catch (error) {
-
     console.error(`[ERROR] Terjadi kegagalan interaksi:`, error);
-
 
     if (interaction.replied || interaction.deferred) {
       await interaction
