@@ -9,7 +9,7 @@ import {
   RT_CONFIG,
   TOWA_COLOR,
 } from "../config/towaCardConfig.js";
-import { getChatProgress, getVoiceProgress } from "../utils/leveling.js";
+import { getChatProgress, getVoiceProgress } from "../utils/xpFormula.js";
 
 // ============================================================
 // LAYOUT CONSTANTS
