@@ -27,8 +27,8 @@ const RIGHT_PANELS = [
 ];
 
 const AVATAR = { cx: LEFT_PANEL.x + LEFT_PANEL.w / 2, cy: 205, r: 55 };
-const NAME_Y = AVATAR.cy + AVATAR.r + 30; // 310
-const USERNAME_Y = NAME_Y + 18; // 332
+const NAME_Y = AVATAR.cy + AVATAR.r + 40; // 310
+const USERNAME_Y = NAME_Y + 22; // 332
 
 const LEFT_PAD_X = 25;
 const LEFT_CONTENT_X = LEFT_PANEL.x + LEFT_PAD_X; // 65
