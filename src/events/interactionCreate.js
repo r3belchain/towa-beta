@@ -1,6 +1,5 @@
 import { Events } from "discord.js";
 
-// [IMPORT LAMA MILIKMU]
 import { handleVerifyGirl } from "../modules/roles/verifyGirl.js";
 import { handleVerifyKebal } from "../modules/roles/verifyKebal.js";
 import {
@@ -15,19 +14,26 @@ import {
   handleTicketOpen,
 } from "../modules/tickets/ticketHandler.js";
 
-// [TAMBAHAN: IMPORT HANDLER TOWA CARD BARU]
-// Pastikan path-nya sesuai dengan letak folder services kamu!
+// ==========================================
+// IMPORT HANDLER TOWA CARD
+// ==========================================
 import {
   handleStatusSelect,
   handleOpenEditModal,
   handleEditModalSubmit,
-  IDS,
+  IDS as EditIDS, // Alias agar tidak bentrok
 } from "../services/towaCardEditHandler.js";
+
+import {
+  handleThemeSelect,
+  IDS as ThemeIDS, // Alias agar tidak bentrok
+} from "../services/themeSelectHandler.js";
 
 export const name = Events.InteractionCreate;
 
 export async function execute(interaction) {
   try {
+    // 1. HANDLER COMMAND (/towacard, dll)
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
 
@@ -41,40 +47,62 @@ export async function execute(interaction) {
         await interaction.deferReply();
         const embed = await getLeaderboardEmbed();
         await interaction.editReply({ embeds: [embed] });
+        return;
       } else if (interaction.commandName === "parkir") {
         await handleParkirCommand(interaction);
+        return;
       } else if (interaction.commandName === "unparkir") {
         await handleUnparkirCommand(interaction);
+        return;
       } else if (interaction.commandName === "verify-kebal") {
         await handleVerifyKebal(interaction);
+        return;
       } else if (interaction.commandName === "verify-girl") {
         await handleVerifyGirl(interaction);
+        return;
       } else if (interaction.commandName === "ticket") {
         await handleTicketCommand(interaction);
+        return;
       } else if (interaction.commandName === "ticket-category") {
         await handleTicketCategoryCommand(interaction);
+        return;
       }
-    } else if (interaction.isButton()) {
-      // HANDLER TOMBOL
+
+      // ⚠️ JARING PENGAMAN: Jika command tidak ada di modul & legacy
+      return interaction.reply({
+        content: `❌ Command \`/${interaction.commandName}\` tidak ditemukan di memori bot! Cek log VPS apakah file command-nya gagal di-load.`,
+        ephemeral: true,
+      });
+    }
+
+    // 2. HANDLER BUTTON (Tombol)
+    else if (interaction.isButton()) {
       if (interaction.customId.startsWith("TICKET_CREATE")) {
         await handleTicketOpen(interaction);
       } else if (interaction.customId === "TICKET_CLOSE") {
         await handleTicketClose(interaction);
       }
-      // [TAMBAHAN: Tombol Buka Modal Edit]
-      else if (interaction.customId === IDS.OPEN_MODAL_BUTTON_ID) {
+      // Tombol Buka Modal Edit KTP
+      else if (interaction.customId === EditIDS.OPEN_MODAL_BUTTON_ID) {
         await handleOpenEditModal(interaction);
       }
     }
-    // [TAMBAHAN: HANDLER SELECT MENU / DROPDOWN STATUS]
+
+    // 3. HANDLER SELECT MENU (Dropdown)
     else if (interaction.isStringSelectMenu()) {
-      if (interaction.customId === IDS.STATUS_SELECT_ID) {
+      // Dropdown Status
+      if (interaction.customId === EditIDS.STATUS_SELECT_ID) {
         await handleStatusSelect(interaction);
       }
+      // Dropdown Theme
+      else if (interaction.customId === ThemeIDS.THEME_SELECT_ID) {
+        await handleThemeSelect(interaction);
+      }
     }
-    // [TAMBAHAN: HANDLER SUBMIT MODAL BIO/QUOTE/HOBI]
+
+    // 4. HANDLER MODAL (Form Submit)
     else if (interaction.isModalSubmit()) {
-      if (interaction.customId === IDS.EDIT_MODAL_ID) {
+      if (interaction.customId === EditIDS.EDIT_MODAL_ID) {
         await handleEditModalSubmit(interaction);
       }
     }
