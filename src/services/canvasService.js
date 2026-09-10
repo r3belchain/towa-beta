@@ -35,12 +35,12 @@ const LEFT_PAD_X = 25;
 const LEFT_CONTENT_X = LEFT_PANEL.x + LEFT_PAD_X; // 65
 const LEFT_CONTENT_MAX_W = LEFT_PANEL.w - LEFT_PAD_X * 2; 
 const FIELDS_START_Y = 368;
-const LABEL_FONT = "bold 11px Poppins";
-const VALUE_FONT = "14px Poppins";
+const LABEL_FONT = "bold 15px Poppins";
+const VALUE_FONT = "13px Poppins";
 const VALUE_FONT_BOLD = "bold 14px Poppins";
-const LABEL_GAP = 15; 
-const LINE_HEIGHT = 17; 
-const FIELD_GAP = 12; 
+const LABEL_GAP = 20; 
+const LINE_HEIGHT = 20; 
+const FIELD_GAP = 24; 
 
 const RIGHT_PAD_X = 35;
 const RIGHT_CONTENT_X = RIGHT_PANEL_X + RIGHT_PAD_X;
