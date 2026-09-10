@@ -39,7 +39,7 @@ const VALUE_FONT = "13px Poppins";
 const VALUE_FONT_BOLD = "bold 14px Poppins";
 const LABEL_GAP = 20;
 const LINE_HEIGHT = 20;
-const FIELD_GAP = 24;
+const FIELD_GAP = 18;
 
 const RIGHT_PAD_X = 35;
 const RIGHT_CONTENT_X = RIGHT_PANEL_X + RIGHT_PAD_X;
