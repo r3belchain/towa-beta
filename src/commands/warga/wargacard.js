@@ -1,11 +1,14 @@
-import { AttachmentBuilder, SlashCommandBuilder } from "discord.js";
+import {
+  AttachmentBuilder,
+  SlashCommandBuilder,
+  MessageFlags,
+} from "discord.js";
 import { generateWargaCard } from "../../services/canvasService.js";
 import {
   getOrCreateUserStats,
   getOrCreateWargaCard,
   updateWargaBackground,
 } from "../../services/databaseService.js";
-// ⚠️ Sesuaikan path ini dengan lokasi final towaCardEditHandler.js / themeSelectHandler.js
 import { buildEditMessage } from "../../services/towaCardEditHandler.js";
 import { buildThemeMessage } from "../../services/themeSelectHandler.js";
 
@@ -54,7 +57,7 @@ export async function execute(interaction) {
   const userId = interaction.user.id;
 
   try {
-    // ---------- PROFIL (publik) ----------
+    // PROFIL
     if (subcommand === "profil") {
       await interaction.deferReply();
 
@@ -77,23 +80,23 @@ export async function execute(interaction) {
       await interaction.editReply({ files: [attachment] });
     }
 
-    // ---------- EDIT: Bio, Quote, Hobi, Status (ephemeral) ----------
+    // EDIT: Bio, Quote, Hobi, Status-
     else if (subcommand === "edit") {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const userKtpData = await getOrCreateWargaCard(userId);
       await interaction.editReply(buildEditMessage(userKtpData));
     }
 
-    // ---------- THEME (ephemeral) ----------
+    // THEME (flags) 
     else if (subcommand === "theme") {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       await interaction.editReply(buildThemeMessage());
     }
-
-    // ---------- BACKGROUND (publik, seperti sebelumnya) ----------
+    // ---------- BACKGROUND (sekarang flags) ----------
     else if (subcommand === "background") {
-      await interaction.deferReply();
+      // 1. Ganti deferReply di sini
+      await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const attachment = interaction.options.getAttachment("gambar");
       if (!attachment) {
@@ -119,12 +122,14 @@ export async function execute(interaction) {
     const errorMessage =
       "❌ Terjadi kesalahan fatal pada sistem TOWA Card. Hubungi Mekanik TOWA!";
 
-    // interaction bisa sudah deferred/replied di titik manapun tergantung di
-    // mana error terjadi — cek dulu sebelum pilih reply() vs editReply().
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(errorMessage);
     } else {
-      await interaction.reply({ content: errorMessage, ephemeral: true });
+      // 2. Ganti reply di bagian error handling ini
+      await interaction.reply({
+        content: errorMessage,
+        flags: MessageFlags.Ephemeral,
+      });
     }
   }
 }
