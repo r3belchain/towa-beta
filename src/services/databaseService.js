@@ -117,3 +117,14 @@ export async function updateWargaStatus(userId, statusId) {
     .eq("user_id", userId);
   if (error) throw error;
 }
+
+export async function updateWargaTheme(userId, themeName) {
+  await getOrCreateWargaCard(userId);
+
+  const { error } = await supabase
+    .from("warga_cards")
+    .update({ theme: themeName })
+    .eq("user_id", userId);
+
+  if (error) throw error;
+}
