@@ -1,4 +1,3 @@
-
 export const STATUS_OPTIONS = [
   { id: "single", label: "Single", emoji: "💚" },
   { id: "taken", label: "Taken", emoji: "❤️" },

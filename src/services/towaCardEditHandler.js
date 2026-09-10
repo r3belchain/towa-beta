@@ -76,7 +76,7 @@ export async function handleOpenEditModal(interaction) {
     console.error("Gagal mengambil data untuk Modal:", error);
     return interaction.reply({
       content: "❌ Gagal mengambil datamu. Coba lagi nanti.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -92,7 +92,6 @@ export async function handleOpenEditModal(interaction) {
     .setRequired(false)
     .setPlaceholder("Tulis deskripsi singkat tentangmu...");
 
-  // 2. SOLUSI ANTI-CRASH: Hanya set value JIKA data ada di database
   if (currentData.description && currentData.description !== "Belum ada Bio") {
     bioInput.setValue(currentData.description);
   }
@@ -131,6 +130,8 @@ export async function handleOpenEditModal(interaction) {
 }
 
 export async function handleEditModalSubmit(interaction) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
   const bio = interaction.fields.getTextInputValue("bio");
   const quote = interaction.fields.getTextInputValue("quote");
   const hobi = interaction.fields.getTextInputValue("hobi");
@@ -141,15 +142,14 @@ export async function handleEditModalSubmit(interaction) {
     await updateWargaHobi(interaction.user.id, hobi || null);
   } catch (err) {
     console.error("Gagal update bio/quote/hobi:", err);
-    return interaction.reply({
+
+    return interaction.editReply({
       content: "Gagal menyimpan perubahan, coba lagi.",
-      ephemeral: true,
     });
   }
 
-  return interaction.reply({
+  return interaction.editReply({
     content: "Bio, Quote, dan Hobi berhasil diperbarui ✅",
-    ephemeral: true,
   });
 }
 
