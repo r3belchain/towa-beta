@@ -1,25 +1,11 @@
-/**
- * Theme palette config untuk TOWA Card.
- *
- * "accent" sebagai nilai warna artinya: pakai TOWA_COLOR (brand gold/amber)
- * yang sudah kamu definisikan di config lain — dikunci konstan di semua tema
- * supaya identitas TOWA tetap kelihatan meskipun background/panel berubah.
- *
- * panelBorderAlpha dipakai untuk generate border panel dari TOWA_COLOR
- * (lihat withAlpha() di generateWargaCard.js) — bukan warna literal, supaya
- * satu sumber warna brand tidak terduplikasi di banyak tempat.
- */
-
 export const DEFAULT_THEME = "cloud";
 
 export const THEMES = {
-  // ================= DARK =================
+  //  DARK
   ember: {
     label: "Ember",
     mode: "dark",
     emoji: "🌙",
-    // Skema original TOWA Card — dikunci sebagai tema dark signature,
-    // supaya user lama tidak lihat perubahan kalau belum ganti tema.
     bgGradient: ["#0f172a", "#331800", "#9a3412"],
     bgOverlayColor: "#0f0f0f",
     bgOverlayAlpha: 0.8,
@@ -62,12 +48,11 @@ export const THEMES = {
     progressChat: "accent",
   },
 
-  // ================= LIGHT =================
+  // LIGHT
   cloud: {
     label: "Cloud",
     mode: "light",
     emoji: "☀️",
-    // Default theme untuk user baru (belum pernah set tema).
     bgGradient: ["#fff7ed", "#ffedd5", "#fed7aa"],
     bgOverlayColor: "#ffffff",
     bgOverlayAlpha: 0.55,

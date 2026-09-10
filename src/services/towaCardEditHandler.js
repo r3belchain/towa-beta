@@ -20,18 +20,6 @@ const STATUS_SELECT_ID = "towacard_status_select";
 const OPEN_MODAL_BUTTON_ID = "towacard_open_edit_modal";
 const EDIT_MODAL_ID = "towacard_edit_modal";
 
-/**
- * Kenapa dipecah jadi select menu + tombol pembuka modal (bukan satu Modal
- * berisi 4 field): Discord Modal cuma bisa isi TextInput, tidak bisa isi
- * select menu di dalamnya. Karena Status sekarang pilihan tetap (dropdown),
- * dia harus jadi komponen terpisah di luar modal. Ini tetap "satu
- * subcommand" (/towacard edit) — cuma dua langkah interaksi.
- */
-
-// Step 1: dipanggil dari wargacard.js saat user run `/towacard edit`.
-// Dipakai dengan interaction.editReply() setelah deferReply({ephemeral:true})
-// — makanya object ini TIDAK punya key `ephemeral` (editReply tidak
-// menerima itu, ephemeral cuma valid di reply()/deferReply()).
 export function buildEditMessage(currentData = {}) {
   const statusSelect = new StringSelectMenuBuilder()
     .setCustomId(STATUS_SELECT_ID)
@@ -59,9 +47,6 @@ export function buildEditMessage(currentData = {}) {
   };
 }
 
-// Step 2a: handler saat user pilih status di dropdown.
-// Panggil ini dari router interaksi kamu saat interaction.isStringSelectMenu()
-// && interaction.customId === IDS.STATUS_SELECT_ID.
 export async function handleStatusSelect(interaction) {
   const statusId = interaction.values[0];
 
@@ -83,11 +68,7 @@ export async function handleStatusSelect(interaction) {
   });
 }
 
-// Step 2b: handler saat user klik tombol "Edit Bio, Quote & Hobi".
-// Panggil dari router saat interaction.isButton() &&
-// interaction.customId === IDS.OPEN_MODAL_BUTTON_ID.
 export async function handleOpenEditModal(interaction) {
-  // 1. SOLUSI DATA GAIB: Tarik data real-time dari database SAAT tombol diklik!
   let currentData;
   try {
     currentData = await getOrCreateWargaCard(interaction.user.id);
@@ -148,9 +129,7 @@ export async function handleOpenEditModal(interaction) {
 
   return interaction.showModal(modal);
 }
-// Step 3: handler saat modal disubmit.
-// Panggil dari router saat interaction.isModalSubmit() &&
-// interaction.customId === IDS.EDIT_MODAL_ID.
+
 export async function handleEditModalSubmit(interaction) {
   const bio = interaction.fields.getTextInputValue("bio");
   const quote = interaction.fields.getTextInputValue("quote");

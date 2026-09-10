@@ -93,9 +93,9 @@ export async function execute(interaction) {
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
       await interaction.editReply(buildThemeMessage());
     }
-    // ---------- BACKGROUND (sekarang flags) ----------
+    // BACKGROUND 
     else if (subcommand === "background") {
-      // 1. Ganti deferReply di sini
+     
       await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
       const attachment = interaction.options.getAttachment("gambar");
@@ -125,7 +125,6 @@ export async function execute(interaction) {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply(errorMessage);
     } else {
-      // 2. Ganti reply di bagian error handling ini
       await interaction.reply({
         content: errorMessage,
         flags: MessageFlags.Ephemeral,

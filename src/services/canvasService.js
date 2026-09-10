@@ -11,18 +11,16 @@ import {
 } from "../config/towaCardConfig.js";
 import { getChatProgress, getVoiceProgress } from "../utils/xpFormula.js";
 
-// ============================================================
+
 // LAYOUT CONSTANTS
-// Semua angka posisi terpusat di sini — ubah proporsi cukup di satu tempat,
-// tidak perlu berburu magic number di tengah fungsi render.
-// ============================================================
+
 const CANVAS_W = 1280;
 const CANVAS_H = 720;
 const PANEL_RADIUS = 16;
 
 const LEFT_PANEL = { x: 40, y: 120, w: 360, h: 560 };
-const RIGHT_PANEL_X = LEFT_PANEL.x + LEFT_PANEL.w + 30; // 430
-const RIGHT_PANEL_W = 1240 - RIGHT_PANEL_X; // 810, simetris dgn margin kanan 40
+const RIGHT_PANEL_X = LEFT_PANEL.x + LEFT_PANEL.w + 30; 
+const RIGHT_PANEL_W = 1240 - RIGHT_PANEL_X; 
 const RIGHT_PANELS = [
   { y: 120, h: 190 }, // BADGE + ROLE
   { y: 330, h: 190 }, // LEVELING
@@ -35,22 +33,21 @@ const USERNAME_Y = NAME_Y + 22; // 332
 
 const LEFT_PAD_X = 25;
 const LEFT_CONTENT_X = LEFT_PANEL.x + LEFT_PAD_X; // 65
-const LEFT_CONTENT_MAX_W = LEFT_PANEL.w - LEFT_PAD_X * 2; // 310
+const LEFT_CONTENT_MAX_W = LEFT_PANEL.w - LEFT_PAD_X * 2; 
 const FIELDS_START_Y = 368;
 const LABEL_FONT = "bold 11px Poppins";
 const VALUE_FONT = "14px Poppins";
 const VALUE_FONT_BOLD = "bold 14px Poppins";
-const LABEL_GAP = 15; // jarak label -> baris pertama value
-const LINE_HEIGHT = 17; // tinggi tiap baris value (dipakai utk wrap)
-const FIELD_GAP = 12; // jarak antara field satu ke field berikutnya
+const LABEL_GAP = 15; 
+const LINE_HEIGHT = 17; 
+const FIELD_GAP = 12; 
 
 const RIGHT_PAD_X = 35;
 const RIGHT_CONTENT_X = RIGHT_PANEL_X + RIGHT_PAD_X;
 const RIGHT_CONTENT_W = RIGHT_PANEL_W - RIGHT_PAD_X * 2;
 
-// ============================================================
+
 // COLOR HELPERS
-// ============================================================
 function hexToRgb(hex) {
   const clean = hex.replace("#", "");
   const bigint = parseInt(clean, 16);
@@ -62,16 +59,13 @@ function withAlpha(hex, alpha) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-// "accent" di theme config berarti "pakai TOWA_COLOR" — resolve di sini
-// supaya themes.js tidak perlu import TOWA_COLOR dan bisa tetap jadi
-// pure data config.
+
 function resolveColor(theme, value) {
   return value === "accent" ? TOWA_COLOR : value;
 }
 
-// ============================================================
+
 // DRAW PRIMITIVES
-// ============================================================
 function drawPanel(ctx, x, y, width, height, radius, theme) {
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, radius);
@@ -128,7 +122,7 @@ function drawProgressBar(
   }
 }
 
-// Draw langsung (dipakai untuk QUOTE, yang lebar & tingginya lebih longgar).
+
 function wrapTextDraw(ctx, text, x, y, maxWidth, lineHeight) {
   const words = text.split(" ");
   let line = "";
@@ -147,9 +141,6 @@ function wrapTextDraw(ctx, text, x, y, maxWidth, lineHeight) {
   return y;
 }
 
-// Versi "measure only" dengan batas maxLines — dipakai kolom kiri supaya
-// tidak pernah overflow keluar panel walau isinya panjang. Baris terakhir
-// di-ellipsize kalau masih ada sisa teks yang tidak muat.
 function wrapLinesWithLimit(ctx, text, maxWidth, maxLines) {
   const words = text.split(" ");
   const lines = [];
@@ -167,7 +158,6 @@ function wrapLinesWithLimit(ctx, text, maxWidth, maxLines) {
   }
   if (lines.length < maxLines && line) lines.push(line);
 
-  // Ada sisa kata yang belum masuk -> ellipsize baris terakhir
   const consumedWords = lines.join(" ").split(" ").length;
   if (consumedWords < words.length && lines.length > 0) {
     let last = lines[lines.length - 1];
@@ -180,12 +170,8 @@ function wrapLinesWithLimit(ctx, text, maxWidth, maxLines) {
   return lines.length > 0 ? lines : [""];
 }
 
-// ============================================================
+
 // KOLOM KIRI — renderer dinamis
-// Setiap field naikkan cursorY sesuai jumlah baris HASIL WRAP-nya sendiri,
-// bukan angka gap yang di-hardcode sama rata untuk semua field. Ini yang
-// bikin Bio bisa dapat 2 baris tanpa field lain jadi berantakan / overflow.
-// ============================================================
 function renderLeftFields(ctx, fields, theme) {
   let cursorY = FIELDS_START_Y;
 
@@ -214,26 +200,23 @@ function renderLeftFields(ctx, fields, theme) {
     cursorY = lineY - LINE_HEIGHT + LINE_HEIGHT + FIELD_GAP;
   }
 
-  return cursorY; // berguna buat cek sisa ruang saat development
+  return cursorY;
 }
 
-// ============================================================
+
 // MAIN
-// ============================================================
 export async function generateWargaCard(member, userStats, userKtpData) {
   const theme = getTheme(userKtpData?.theme);
 
   const canvas = createCanvas(CANVAS_W, CANVAS_H);
   const ctx = canvas.getContext("2d");
 
-  // ---------- BACKGROUND ----------
+  //  BACKGROUND 
   if (userKtpData?.background_url) {
     try {
       const bgImage = await loadImage(userKtpData.background_url);
       ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
 
-      // Overlay ikut tema (gelap utk dark theme, putih tipis utk light theme)
-      // supaya teks tetap terbaca di atas foto custom apapun.
       ctx.fillStyle = withAlpha(theme.bgOverlayColor, theme.bgOverlayAlpha);
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     } catch {
@@ -250,12 +233,12 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  // ---------- HEADER ----------
+  // -HEADER 
   ctx.fillStyle = TOWA_COLOR;
   ctx.font = "bold 40px Poppins";
   ctx.fillText("TOWA CARD", 40, 80);
 
-  // ---------- PANELS ----------
+  // PANELS 
   drawPanel(
     ctx,
     LEFT_PANEL.x,
@@ -269,7 +252,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     drawPanel(ctx, RIGHT_PANEL_X, p.y, RIGHT_PANEL_W, p.h, PANEL_RADIUS, theme);
   }
 
-  // ---------- AVATAR ----------
+  // AVATAR 
   const avatarUrl = member.user.displayAvatarURL({
     extension: "png",
     size: 256,
@@ -308,7 +291,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.fillText(`@${member.user.username}`, AVATAR.cx, USERNAME_Y);
   ctx.textAlign = "left";
 
-  // ---------- KOLOM KIRI: 6 FIELD ----------
+  // KOLOM KIRI: 6 FIELD 
   const joinDate = new Intl.DateTimeFormat("id-ID", {
     dateStyle: "long",
   }).format(member.joinedAt);
@@ -345,7 +328,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
 
   renderLeftFields(ctx, leftFields, theme);
 
-  // ---------- BADGE ----------
+  //  BADGE 
   ctx.fillStyle = theme.textSecondary;
   ctx.font = "bold 13px Poppins";
   ctx.fillText("BADGE", RIGHT_CONTENT_X, 150);
@@ -361,8 +344,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   } else {
     const badgeSize = 60;
     const badgeGap = 8;
-    // Panel kanan sekarang lebih sempit — batasi jumlah badge yang muat
-    // biar tidak tumpah keluar panel, alih-alih hardcode angka tetap.
+ 
     const maxBadges = Math.max(
       1,
       Math.floor(RIGHT_CONTENT_W / (badgeSize + badgeGap)),
@@ -396,7 +378,6 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     }
   }
 
-  // ---------- ROLE (sudah dibatasi max 3 di kode lama, dipertahankan) ----------
   ctx.fillStyle = theme.textSecondary;
   ctx.font = "bold 13px Poppins";
   ctx.fillText("ROLE", RIGHT_CONTENT_X, 240);
@@ -431,7 +412,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
-  // ---------- LEVELING ----------
+  // LEVELING 
   const cPoints = userStats?.chat_points || 0;
   const vPoints = userStats?.voice_points || 0;
   const chatProg = getChatProgress(cPoints);
@@ -460,7 +441,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   const voiceColor = resolveColor(theme, theme.progressVoice);
   const chatColor = resolveColor(theme, theme.progressChat);
 
-  // --- BAR VOICE ---
+  //  BAR VOICE 
   ctx.fillStyle = theme.textSecondary;
   ctx.font = "13px Poppins";
   ctx.fillText(
@@ -479,7 +460,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     theme.progressTrack,
   );
 
-  // --- BAR CHAT ---
+  //  BAR CHAT 
   ctx.fillStyle = theme.textSecondary;
   ctx.font = "13px Poppins";
   ctx.fillText(
@@ -498,7 +479,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
     theme.progressTrack,
   );
 
-  // ---------- QUOTE ----------
+  //  QUOTE 
   ctx.fillStyle = theme.textPrimary;
   ctx.font = "bold 18px Poppins";
   ctx.fillText("QUOTE ASBUN", RIGHT_CONTENT_X, 580);
@@ -509,7 +490,7 @@ export async function generateWargaCard(member, userStats, userKtpData) {
   const quoteText = rawQuote ? `"${rawQuote}"` : '"Belum ada quote"';
   wrapTextDraw(ctx, quoteText, RIGHT_CONTENT_X, 615, RIGHT_CONTENT_W, 24);
 
-  // ---------- FOOTER ----------
+  // FOOTER 
   ctx.fillStyle = theme.textSecondary;
   ctx.font = "bold 13px Poppins";
   ctx.textAlign = "left";

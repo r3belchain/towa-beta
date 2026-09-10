@@ -1,11 +1,10 @@
 import { ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
-import { listThemesByMode } from "./themes.js"; // ⚠️ sesuaikan lokasi file ini
-// ⚠️ updateWargaTheme BELUM ada di databaseService.js — perlu ditambahkan.
+import { listThemesByMode } from "./themes.js"; // 
 import { updateWargaTheme } from "./databaseService.js";
 
 const THEME_SELECT_ID = "towacard_theme_select";
 
-// Dipanggil dari wargacard.js saat user run `/towacard theme`.
+
 export function buildThemeMessage() {
   const { light, dark } = listThemesByMode();
 
@@ -33,8 +32,7 @@ export function buildThemeMessage() {
   };
 }
 
-// Panggil dari router saat interaction.isStringSelectMenu() &&
-// interaction.customId === IDS.THEME_SELECT_ID.
+
 export async function handleThemeSelect(interaction) {
   const themeKey = interaction.values[0];
 

@@ -1,6 +1,4 @@
-// Pilihan tetap untuk field "Status" (status hubungan).
-// Tambah/kurangi di sini saja — dipakai bareng oleh select menu (towaCardEdit.js)
-// dan renderer card (generateWargaCard.js).
+
 export const STATUS_OPTIONS = [
   { id: "single", label: "Single", emoji: "💚" },
   { id: "taken", label: "Taken", emoji: "❤️" },

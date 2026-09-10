@@ -2,38 +2,35 @@ import { Events } from "discord.js";
 
 import { handleVerifyGirl } from "../modules/roles/verifyGirl.js";
 import { handleVerifyKebal } from "../modules/roles/verifyKebal.js";
-import {
-  handleParkirCommand,
-  handleUnparkirCommand,
-} from "../modules/voice/parkingVoice.js";
-import { getLeaderboardEmbed } from "../modules/vote/leaderboard.js";
 import { handleTicketCommand } from "../modules/tickets/ticket.js";
 import { handleTicketCategoryCommand } from "../modules/tickets/ticketCategory.js";
 import {
   handleTicketClose,
   handleTicketOpen,
 } from "../modules/tickets/ticketHandler.js";
-
-// ==========================================
-// IMPORT HANDLER TOWA CARD
-// ==========================================
 import {
-  handleStatusSelect,
-  handleOpenEditModal,
+  handleParkirCommand,
+  handleUnparkirCommand,
+} from "../modules/voice/parkingVoice.js";
+import { getLeaderboardEmbed } from "../modules/vote/leaderboard.js";
+
+// IMPORT HANDLER TOWA CARD
+import {
+  IDS as EditIDS,
   handleEditModalSubmit,
-  IDS as EditIDS, // Alias agar tidak bentrok
+  handleOpenEditModal,
+  handleStatusSelect,
 } from "../services/towaCardEditHandler.js";
 
 import {
   handleThemeSelect,
-  IDS as ThemeIDS, // Alias agar tidak bentrok
+  IDS as ThemeIDS,
 } from "../services/themeSelectHandler.js";
 
 export const name = Events.InteractionCreate;
 
 export async function execute(interaction) {
   try {
-    // 1. HANDLER COMMAND (/towacard, dll)
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
 
@@ -68,14 +65,14 @@ export async function execute(interaction) {
         return;
       }
 
-      // ⚠️ JARING PENGAMAN: Jika command tidak ada di modul & legacy
+      //  PENGAMAN
       return interaction.reply({
         content: `❌ Command \`/${interaction.commandName}\` tidak ditemukan di memori bot! Cek log VPS apakah file command-nya gagal di-load.`,
         ephemeral: true,
       });
     }
 
-    // 2. HANDLER BUTTON (Tombol)
+    // HANDLER BUTTON
     else if (interaction.isButton()) {
       if (interaction.customId.startsWith("TICKET_CREATE")) {
         await handleTicketOpen(interaction);
@@ -88,19 +85,17 @@ export async function execute(interaction) {
       }
     }
 
-    // 3. HANDLER SELECT MENU (Dropdown)
+    // HANDLER SELECT MENU (
     else if (interaction.isStringSelectMenu()) {
       // Dropdown Status
       if (interaction.customId === EditIDS.STATUS_SELECT_ID) {
         await handleStatusSelect(interaction);
-      }
-      // Dropdown Theme
-      else if (interaction.customId === ThemeIDS.THEME_SELECT_ID) {
+      } else if (interaction.customId === ThemeIDS.THEME_SELECT_ID) {
         await handleThemeSelect(interaction);
       }
     }
 
-    // 4. HANDLER MODAL (Form Submit)
+    // HANDLER MODAL
     else if (interaction.isModalSubmit()) {
       if (interaction.customId === EditIDS.EDIT_MODAL_ID) {
         await handleEditModalSubmit(interaction);

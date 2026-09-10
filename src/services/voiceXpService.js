@@ -1,4 +1,4 @@
-  // src/services/voiceXpService.js
+
   import { updateVoiceXpInDatabase } from "./databaseService.js";
 
   const voiceSessions = new Map();
